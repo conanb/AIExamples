@@ -11,7 +11,7 @@ public:
 	Decision() {}
 	virtual ~Decision() {}
 	
-	virtual void makeDecision(GameObject* gameObject, float deltaTime) = 0;
+	virtual void makeDecision(Entity* entity, float deltaTime) = 0;
 };
 
 // conditional decision
@@ -31,16 +31,16 @@ public:
 	void setTrueBranch(Decision* decision) { m_trueBranch = decision; }
 	void setFalseBranch(Decision* decision) { m_falseBranch = decision; }
 
-	virtual void makeDecision(GameObject* gameObject, float deltaTime) {
+	virtual void makeDecision(Entity* entity, float deltaTime) {
 
 		if (m_condition != nullptr &&
 			m_trueBranch != nullptr &&
 			m_falseBranch != nullptr) {
 
-			if (m_condition->test(gameObject))
-				m_trueBranch->makeDecision(gameObject, deltaTime);
+			if (m_condition->test(entity))
+				m_trueBranch->makeDecision(entity, deltaTime);
 			else
-				m_falseBranch->makeDecision(gameObject, deltaTime);
+				m_falseBranch->makeDecision(entity, deltaTime);
 		}
 	}
 
@@ -51,7 +51,7 @@ protected:
 	Decision*	m_falseBranch;
 };
 
-// a behaviour that can be attached to a GameObject that
+// a behaviour that can be attached to a Entity that
 // uses a Decision to perform actions (can be a tree or single decision)
 class DecisionBehaviour : public Behaviour {
 public:
@@ -61,10 +61,10 @@ public:
 
 	void setDecision(Decision* decision) { m_decision = decision; }
 
-	virtual eBehaviourResult execute(GameObject* gameObject, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
 
 		if (m_decision != nullptr) {
-			m_decision->makeDecision(gameObject, deltaTime);
+			m_decision->makeDecision(entity, deltaTime);
 			return eBehaviourResult::SUCCESS;
 		}
 		return eBehaviourResult::FAILURE;
@@ -85,10 +85,10 @@ public:
 
 	void setBehaviour(Behaviour* behaviour) { m_behaviour = behaviour; }
 
-	virtual void makeDecision(GameObject* gameObject, float deltaTime) {
+	virtual void makeDecision(Entity* entity, float deltaTime) {
 
 		if (m_behaviour != nullptr)
-			m_behaviour->execute(gameObject, deltaTime);
+			m_behaviour->execute(entity, deltaTime);
 	}
 
 protected:
@@ -105,22 +105,22 @@ public:
 
 	void setForce(SteeringForce* force) { m_force = force; }
 
-	virtual void makeDecision(GameObject* gameObject, float deltaTime) {
+	virtual void makeDecision(Entity* entity, float deltaTime) {
 
 		Vector2* velocity = nullptr;
 
 		// must have velocity
-		if (gameObject->getBlackboard().get("velocity", &velocity) == false)
+		if (entity->getBlackboard().get("velocity", &velocity) == false)
 			return;
 
 		// apply force to velocity
-		auto force = m_force->getForce(gameObject);
+		auto force = m_force->getForce(entity);
 
 		velocity->x += force.x * deltaTime;
 		velocity->y += force.y * deltaTime;
 
 		float maxVelocity = 0;
-		gameObject->getBlackboard().get("maxVelocity", maxVelocity);
+		entity->getBlackboard().get("maxVelocity", maxVelocity);
 
 		// cap velocity
 		float magnitudeSqr = velocity->x * velocity->x + velocity->y * velocity->y;
@@ -131,7 +131,7 @@ public:
 		}
 
 		// move the game object
-		gameObject->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+		entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
 	}
 
 protected:
@@ -148,10 +148,10 @@ public:
 
 	void addDecision(Decision* decision) { m_decisions.push_back(decision); }
 	
-	virtual void makeDecision(GameObject* gameObject, float deltaTime) {
+	virtual void makeDecision(Entity* entity, float deltaTime) {
 
 		if (m_decisions.empty() == false) {
-			m_decisions[rand() % m_decisions.size()]->makeDecision(gameObject, deltaTime);
+			m_decisions[rand() % m_decisions.size()]->makeDecision(entity, deltaTime);
 		}
 	}
 

@@ -34,12 +34,6 @@ public:
 class Node {
 public:
 
-	// potentially tag nodes with flags to search for
-	enum eFlags {
-		MEDKIT = (1 << 0),
-		AMMO = (1 << 1),
-	};
-
 	Node() : flags(0) {}
 	virtual ~Node() { for (auto e : edges) delete e; }
 

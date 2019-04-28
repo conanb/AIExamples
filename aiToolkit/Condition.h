@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameObject.h"
+#include "Entity.h"
 
 // condition is also a behaviour so that it can work within a behaviour tree
 class Condition : public Behaviour {
@@ -9,10 +9,10 @@ public:
 	Condition() {}
 	virtual ~Condition() {}
 
-	virtual bool test(GameObject* gameObject) const = 0;
+	virtual bool test(Entity* entity) const = 0;
 
-	virtual eBehaviourResult execute(GameObject* gameObject, float deltaTime) {
-		if (test(gameObject))
+	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+		if (test(entity))
 			return eBehaviourResult::SUCCESS;
 		return eBehaviourResult::FAILURE;
 	}
@@ -26,7 +26,7 @@ public:
 	}
 	virtual ~FloatRangeCondition() {}
 
-	virtual bool test(GameObject* gameObject) const {
+	virtual bool test(Entity* entity) const {
 		return (m_min <= *m_value) && (m_max >= *m_value);
 	}
 
@@ -44,7 +44,7 @@ public:
 	}
 	virtual ~FloatGreaterCondition() {}
 
-	virtual bool test(GameObject* gameObject) const {
+	virtual bool test(Entity* entity) const {
 		return *m_value > m_compare;
 	}
 
@@ -57,18 +57,18 @@ private:
 class WithinRangeCondition : public Condition {
 public:
 
-	WithinRangeCondition(const GameObject* target, float range)
+	WithinRangeCondition(const Entity* target, float range)
 		: m_target(target), m_range(range) {}
 	virtual ~WithinRangeCondition() {}
 
-	virtual bool test(GameObject* gameObject) const {
+	virtual bool test(Entity* entity) const {
 		// get target position
 		float tx = 0, ty = 0;
 		m_target->getPosition(&tx, &ty);
 
 		// get my position
 		float x = 0, y = 0;
-		gameObject->getPosition(&x, &y);
+		entity->getPosition(&x, &y);
 
 		// compare the two and get the distance between them
 		float xDiff = tx - x;
@@ -80,7 +80,7 @@ public:
 
 private:
 
-	const GameObject* m_target;
+	const Entity* m_target;
 	float m_range;
 };
 
@@ -90,8 +90,8 @@ public:
 	NotCondition(const Condition* condition) : m_condition(condition) {}
 	virtual ~NotCondition() {}
 
-	virtual bool test(GameObject* gameObject) const {
-		return !m_condition->test(gameObject);
+	virtual bool test(Entity* entity) const {
+		return !m_condition->test(entity);
 	}
 
 private:

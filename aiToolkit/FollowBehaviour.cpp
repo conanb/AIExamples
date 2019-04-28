@@ -9,7 +9,7 @@ FollowBehaviour::~FollowBehaviour() {
 
 }
 
-eBehaviourResult FollowBehaviour::execute(GameObject* gameObject, float deltaTime) {
+eBehaviourResult FollowBehaviour::execute(Entity* entity, float deltaTime) {
 
 	if (m_target == nullptr)
 		return eBehaviourResult::FAILURE;
@@ -20,7 +20,7 @@ eBehaviourResult FollowBehaviour::execute(GameObject* gameObject, float deltaTim
 	
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	// compare the two and get the distance between them
 	float xDiff = tx - x;
@@ -36,7 +36,7 @@ eBehaviourResult FollowBehaviour::execute(GameObject* gameObject, float deltaTim
 		yDiff /= distance;
 
 		// move to target (can overshoot!)
-		gameObject->translate(xDiff * m_speed * deltaTime, yDiff * m_speed * deltaTime);
+		entity->translate(xDiff * m_speed * deltaTime, yDiff * m_speed * deltaTime);
 	}
 
 	return eBehaviourResult::SUCCESS;

@@ -1,37 +1,37 @@
 #include "State.h"
 
-Transition* State::getTriggeredTransition(GameObject* gameObject) {
+Transition* State::getTriggeredTransition(Entity* entity) {
 
 	for (auto transition : m_transitions) {
-		if (transition->hasTriggered(gameObject))
+		if (transition->hasTriggered(entity))
 			return transition;
 	}
 
 	return nullptr;
 }
 
-eBehaviourResult FiniteStateMachine::execute(GameObject* gameObject, float deltaTime) {
+eBehaviourResult FiniteStateMachine::execute(Entity* entity, float deltaTime) {
 
 	State* state = nullptr;
-	gameObject->getBlackboard().get("currentState", &state);
+	entity->getBlackboard().get("currentState", &state);
 	if (state != nullptr) {
 
-		Transition* transition = state->getTriggeredTransition(gameObject);
+		Transition* transition = state->getTriggeredTransition(entity);
 
 		if (transition != nullptr) {
 
-			state->onExit(gameObject);
+			state->onExit(entity);
 
 			state = transition->getTargetState();
-			gameObject->getBlackboard().set("currentState", state);
+			entity->getBlackboard().set("currentState", state);
 
 			state->m_timer = 0;
-			state->onEnter(gameObject);
+			state->onEnter(entity);
 		}
 
 		// accumulate time and update state
 		state->m_timer += deltaTime;
-		state->update(gameObject, deltaTime);
+		state->update(entity, deltaTime);
 
 		return eBehaviourResult::SUCCESS;
 	}

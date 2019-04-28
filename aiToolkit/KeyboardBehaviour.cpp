@@ -9,7 +9,7 @@ KeyboardBehaviour::~KeyboardBehaviour() {
 
 }
 
-eBehaviourResult KeyboardBehaviour::execute(GameObject* gameObject, float deltaTime) {
+eBehaviourResult KeyboardBehaviour::execute(Entity* entity, float deltaTime) {
 
 	float x = 0, y = 0;
 
@@ -37,7 +37,7 @@ eBehaviourResult KeyboardBehaviour::execute(GameObject* gameObject, float deltaT
 	}
 
 	// apply the movement based on speed and delta time
-	gameObject->translate(x * m_speed * deltaTime, y * m_speed * deltaTime);
+	entity->translate(x * m_speed * deltaTime, y * m_speed * deltaTime);
 
 	return eBehaviourResult::SUCCESS;
 }

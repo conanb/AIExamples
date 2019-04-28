@@ -22,7 +22,7 @@ public:
 	virtual ~SteeringForce() {}
 
 	// pure virtual function
-	virtual Force getForce(GameObject* gameObject) const = 0;
+	virtual Force getForce(Entity* entity) const = 0;
 };
 
 // weighted steering force
@@ -50,7 +50,7 @@ public:
 		}
 	}
 
-	virtual eBehaviourResult execute(GameObject* gameObject, float deltaTime);
+	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
 
 protected:
 
@@ -76,7 +76,7 @@ public:
 		}
 	}
 
-	virtual void update(GameObject* gameObject, float deltaTime);
+	virtual void update(Entity* entity, float deltaTime);
 
 protected:
 
@@ -86,61 +86,61 @@ protected:
 class SeekForce : public SteeringForce {
 public:
 
-	SeekForce(GameObject* target = nullptr) : m_target(target) {}
+	SeekForce(Entity* target = nullptr) : m_target(target) {}
 	virtual ~SeekForce() {}
 
-	void setTarget(GameObject* target) { m_target = target; }
+	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	GameObject*	m_target;
+	Entity*	m_target;
 };
 
 class FleeForce : public SteeringForce {
 public:
 
-	FleeForce(GameObject* target = nullptr) : m_target(target) {}
+	FleeForce(Entity* target = nullptr) : m_target(target) {}
 	virtual ~FleeForce() {}
 
-	void setTarget(GameObject* target) { m_target = target; }
+	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	GameObject*	m_target;
+	Entity*	m_target;
 };
 
 class PursueForce : public SteeringForce {
 public:
 
-	PursueForce(GameObject* target = nullptr) : m_target(target) {}
+	PursueForce(Entity* target = nullptr) : m_target(target) {}
 	virtual ~PursueForce() {}
 
-	void setTarget(GameObject* target) { m_target = target; }
+	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	GameObject*	m_target;
+	Entity*	m_target;
 };
 
 class EvadeForce : public SteeringForce {
 public:
 
-	EvadeForce(GameObject* target = nullptr) : m_target(target) {}
+	EvadeForce(Entity* target = nullptr) : m_target(target) {}
 	virtual ~EvadeForce() {}
 
-	void setTarget(GameObject* target) { m_target = target; }
+	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	GameObject*	m_target;
+	Entity*	m_target;
 };
 
 class WanderForce : public SteeringForce {
@@ -149,7 +149,7 @@ public:
 	WanderForce() {}
 	virtual ~WanderForce() {}
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 };
 
@@ -193,7 +193,7 @@ public:
 
 	void clearObstacles() { m_obstacles.clear();  }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 public:
 
@@ -210,14 +210,14 @@ public:
 	SeparationForce() {}
 	virtual ~SeparationForce() {}
 
-	void setEntities(std::vector<GameObject>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	std::vector<GameObject>*	m_entities;
+	std::vector<Entity>*	m_entities;
 	float						m_radius;
 };
 
@@ -227,14 +227,14 @@ public:
 	CohesionForce() {}
 	virtual ~CohesionForce() {}
 
-	void setEntities(std::vector<GameObject>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	std::vector<GameObject>*	m_entities;
+	std::vector<Entity>*	m_entities;
 	float						m_radius;
 };
 
@@ -244,14 +244,14 @@ public:
 	AlignmentForce() {}
 	virtual ~AlignmentForce() {}
 
-	void setEntities(std::vector<GameObject>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 
-	std::vector<GameObject>*	m_entities;
+	std::vector<Entity>*	m_entities;
 	float						m_radius;
 };
 
@@ -268,7 +268,7 @@ public:
 		m_cellSize = cellSize;
 	}
 
-	virtual Force getForce(GameObject* gameObject) const;
+	virtual Force getForce(Entity* entity) const;
 
 protected:
 

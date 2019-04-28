@@ -1,21 +1,21 @@
 #include "SteeringBehaviour.h"
 
-#include "aiUtilities.h"
+#include "Intersection.h"
 #include "Blackboard.h"
 
 #include <glm/ext.hpp>
 
-eBehaviourResult SteeringBehaviour::execute(GameObject* gameObject, float deltaTime) {
+eBehaviourResult SteeringBehaviour::execute(Entity* entity, float deltaTime) {
 
 	Force force = { 0,0 };
 
 	Vector2* velocity = nullptr;
 	// must have velocity
-	if (gameObject->getBlackboard().get("velocity", &velocity) == false)
+	if (entity->getBlackboard().get("velocity", &velocity) == false)
 		return eBehaviourResult::FAILURE;
 
 	for (auto& wf : m_forces) {
-		Force temp = wf.force->getForce(gameObject);
+		Force temp = wf.force->getForce(entity);
 
 		// accumulate forces
 		force.x += temp.x * wf.weight;
@@ -23,7 +23,7 @@ eBehaviourResult SteeringBehaviour::execute(GameObject* gameObject, float deltaT
 	}
 
 	float maxVelocity = 0;
-	gameObject->getBlackboard().get("maxVelocity", maxVelocity);
+	entity->getBlackboard().get("maxVelocity", maxVelocity);
 
 	velocity->x += force.x * deltaTime;
 	velocity->y += force.y * deltaTime;
@@ -36,17 +36,17 @@ eBehaviourResult SteeringBehaviour::execute(GameObject* gameObject, float deltaT
 		velocity->y = velocity->y / magnitude * maxVelocity;
 	}
 
-	gameObject->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+	entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
 
 	return eBehaviourResult::SUCCESS;
 }
 
-void SteeringState::update(GameObject* gameObject, float deltaTime) {
+void SteeringState::update(Entity* entity, float deltaTime) {
 
 	Force force = { 0,0 };
 
 	for (auto& wf : m_forces) {
-		Force temp = wf.force->getForce(gameObject);
+		Force temp = wf.force->getForce(entity);
 
 		// accumulate forces
 		force.x += temp.x * wf.weight;
@@ -54,10 +54,10 @@ void SteeringState::update(GameObject* gameObject, float deltaTime) {
 	}
 
 	float maxVelocity = 0;
-	gameObject->getBlackboard().get("maxVelocity", maxVelocity);
+	entity->getBlackboard().get("maxVelocity", maxVelocity);
 
 	Vector2* velocity = nullptr;
-	gameObject->getBlackboard().get("velocity", &velocity);
+	entity->getBlackboard().get("velocity", &velocity);
 
 	velocity->x += force.x * deltaTime;
 	velocity->y += force.y * deltaTime;
@@ -70,10 +70,10 @@ void SteeringState::update(GameObject* gameObject, float deltaTime) {
 		velocity->y = velocity->y / magnitude * maxVelocity;
 	}
 
-	gameObject->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+	entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
 }
 
-Force SeekForce::getForce(GameObject* gameObject) const {
+Force SeekForce::getForce(Entity* entity) const {
 
 	// get target position
 	float targetX = 0, targetY = 0;
@@ -81,7 +81,7 @@ Force SeekForce::getForce(GameObject* gameObject) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	// get a vector to the target from "us"
 	float xDiff = targetX - x;
@@ -100,12 +100,12 @@ Force SeekForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return { xDiff * maxForce, yDiff * maxForce };
 }
 
-Force FleeForce::getForce(GameObject* gameObject) const {
+Force FleeForce::getForce(Entity* entity) const {
 
 	// get target position
 	float tx = 0, ty = 0;
@@ -113,7 +113,7 @@ Force FleeForce::getForce(GameObject* gameObject) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	// compare the two and get the distance between them
 	float xDiff = x - tx;
@@ -132,12 +132,12 @@ Force FleeForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ xDiff * maxForce, yDiff * maxForce };
 }
 
-Force PursueForce::getForce(GameObject* gameObject) const {
+Force PursueForce::getForce(Entity* entity) const {
 
 	// get target position
 	float tx = 0, ty = 0;
@@ -145,7 +145,7 @@ Force PursueForce::getForce(GameObject* gameObject) const {
 
 	// get target's velocity
 	Vector2* velocity = nullptr;
-	gameObject->getBlackboard().get("velocity", &velocity);
+	entity->getBlackboard().get("velocity", &velocity);
 
 	// add velocity to target
 	tx += velocity->x;
@@ -153,7 +153,7 @@ Force PursueForce::getForce(GameObject* gameObject) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	// compare the two and get the distance between them
 	float xDiff = tx - x;
@@ -172,12 +172,12 @@ Force PursueForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ xDiff * maxForce, yDiff * maxForce };
 }
 
-Force EvadeForce::getForce(GameObject* gameObject) const {
+Force EvadeForce::getForce(Entity* entity) const {
 
 	// get target position
 	float tx = 0, ty = 0;
@@ -185,7 +185,7 @@ Force EvadeForce::getForce(GameObject* gameObject) const {
 
 	// get target's velocity
 	Vector2* velocity = nullptr;
-	gameObject->getBlackboard().get("velocity", &velocity);
+	entity->getBlackboard().get("velocity", &velocity);
 
 	// add velocity to target
 	tx += velocity->x;
@@ -193,7 +193,7 @@ Force EvadeForce::getForce(GameObject* gameObject) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	// compare the two and get the distance between them
 	float xDiff = x - tx;
@@ -212,15 +212,15 @@ Force EvadeForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ xDiff * maxForce, yDiff * maxForce };
 }
 
-Force WanderForce::getForce(GameObject* gameObject) const {
+Force WanderForce::getForce(Entity* entity) const {
 
 	WanderData* wd = nullptr;
-	if (gameObject->getBlackboard().get("wanderData", &wd) == false) {
+	if (entity->getBlackboard().get("wanderData", &wd) == false) {
 		return{ 0,0 };
 	}
 
@@ -244,7 +244,7 @@ Force WanderForce::getForce(GameObject* gameObject) const {
 
 	// access the game object's velocity as a unit vector (normalised)
 	Vector2* velocity = nullptr;
-	gameObject->getBlackboard().get("velocity", &velocity);
+	entity->getBlackboard().get("velocity", &velocity);
 	float vx = velocity->x;
 	float vy = velocity->y;
 
@@ -270,20 +270,20 @@ Force WanderForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ wanderX * maxForce, wanderY * maxForce };
 }
 
-Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
+Force ObstacleAvoidanceForce::getForce(Entity* entity) const {
 
 	Force force = {0, 0};
 
 	// create feeler
 	float x, y;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 	Vector2* velocity = nullptr;
-	gameObject->getBlackboard().get("velocity", &velocity);
+	entity->getBlackboard().get("velocity", &velocity);
 
 	float ix, iy, t;
 
@@ -295,7 +295,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 		for (auto& obstacle : m_obstacles) {
 
 			if (obstacle.type == Obstacle::SPHERE) {
-				if (rayCircleIntersection(x, y,
+				if (intersection::rayCircleIntersection(x, y,
 										  velocity->x, velocity->y,
 										  obstacle.x, obstacle.y, obstacle.r,
 										  ix, iy, &t)) {
@@ -310,7 +310,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 				// rotate feeler about 30 degrees
 				float s = sinf(3.14159f*0.15f);
 				float c = cosf(3.14159f*0.15f);
-				if (rayCircleIntersection(x, y,
+				if (intersection::rayCircleIntersection(x, y,
 										  velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c, // apply rotation to vector
 										  obstacle.x, obstacle.y, obstacle.r,
 										  ix, iy, &t)) {
@@ -324,7 +324,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 				// rotate feeler about -30 degrees
 				s = sinf(3.14159f*-0.15f);
 				c = cosf(3.14159f*-0.15f);
-				if (rayCircleIntersection(x, y,
+				if (intersection::rayCircleIntersection(x, y,
 										  velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c, // apply rotation to vector
 										  obstacle.x, obstacle.y, obstacle.r,
 										  ix, iy, &t)) {
@@ -340,7 +340,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 
 				float mag = sqrt(magSqr);
 
-				if (rayBoxIntersection(x, y,
+				if (intersection::rayBoxIntersection(x, y,
 									   velocity->x / mag * m_feelerLength, velocity->y / mag * m_feelerLength,
 									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
 									   nx, ny,
@@ -352,7 +352,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 				// rotate feeler about 30 degrees
 				float s = sinf(3.14159f*0.15f);
 				float c = cosf(3.14159f*0.15f);
-				if (rayBoxIntersection(x, y,
+				if (intersection::rayBoxIntersection(x, y,
 									   (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
 									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,
 									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
@@ -364,7 +364,7 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 				// rotate feeler about 30 degrees
 				s = sinf(3.14159f*-0.15f);
 				c = cosf(3.14159f*-0.15f);
-				if (rayBoxIntersection(x, y,
+				if (intersection::rayBoxIntersection(x, y,
 									   (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
 									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,
 									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
@@ -378,23 +378,23 @@ Force ObstacleAvoidanceForce::getForce(GameObject* gameObject) const {
 	}
 	
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ force.x * maxForce, force.y * maxForce };
 }
 
-Force SeparationForce::getForce(GameObject* gameObject) const {
+Force SeparationForce::getForce(Entity* entity) const {
 	
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	Force force = {};
 	int neighbours = 0;
 
 	for (auto& entity : *m_entities) {
 
-		if (gameObject == &entity) continue;
+		if (entity == &entity) continue;
 
 		float tx = 0, ty = 0;
 		entity.getPosition(&tx, &ty);
@@ -429,23 +429,23 @@ Force SeparationForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return { force.x * maxForce, force.y * maxForce };
 }
 
-Force CohesionForce::getForce(GameObject* gameObject) const {
+Force CohesionForce::getForce(Entity* entity) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	Force force = {};
 	int neighbours = 0;
 
 	for (auto& entity : *m_entities) {
 
-		if (gameObject == &entity) continue;
+		if (entity == &entity) continue;
 
 		float tx = 0, ty = 0;
 		entity.getPosition(&tx, &ty);
@@ -480,23 +480,23 @@ Force CohesionForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ force.x * maxForce, force.y * maxForce };
 }
 
-Force AlignmentForce::getForce(GameObject* gameObject) const {
+Force AlignmentForce::getForce(Entity* entity) const {
 
 	// get my position
 	float x = 0, y = 0;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	Force force = {};
 	int neighbours = 0;
 
 	for (auto& entity : *m_entities) {
 
-		if (gameObject == &entity) continue;
+		if (entity == &entity) continue;
 
 		float tx = 0, ty = 0;
 		entity.getPosition(&tx, &ty);
@@ -529,7 +529,7 @@ Force AlignmentForce::getForce(GameObject* gameObject) const {
 	if (neighbours > 0) {
 
 		Vector2* v = nullptr;
-		gameObject->getBlackboard().get("velocity", &v);
+		entity->getBlackboard().get("velocity", &v);
 
 		force.x = force.x / neighbours - v->x;
 		force.y = force.y / neighbours - v->y;
@@ -544,18 +544,18 @@ Force AlignmentForce::getForce(GameObject* gameObject) const {
 	}
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ force.x * maxForce, force.y * maxForce };
 }
 
-Force FlowForce::getForce(GameObject* gameObject) const {
+Force FlowForce::getForce(Entity* entity) const {
 
 	if (m_flowField == nullptr)
 		return { 0, 0 };
 
 	float x, y;
-	gameObject->getPosition(&x, &y);
+	entity->getPosition(&x, &y);
 
 	int ix = int(x / m_cellSize);
 	int iy = int(y / m_cellSize);
@@ -570,7 +570,7 @@ Force FlowForce::getForce(GameObject* gameObject) const {
 	int index = iy * m_cols + ix;
 
 	float maxForce = 0;
-	gameObject->getBlackboard().get("maxForce", maxForce);
+	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ m_flowField[index].x * maxForce, m_flowField[index].y * maxForce };
 }

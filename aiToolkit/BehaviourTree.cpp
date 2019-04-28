@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-eBehaviourResult TimeoutDecorator::execute(GameObject* gameObject, float deltaTime) {
+eBehaviourResult TimeoutDecorator::execute(Entity* entity, float deltaTime) {
 
 	float currTime = (float)glfwGetTime();
 
@@ -12,7 +12,7 @@ eBehaviourResult TimeoutDecorator::execute(GameObject* gameObject, float deltaTi
 
 		m_lastTime = currTime;
 
-		return m_child->execute(gameObject, deltaTime);
+		return m_child->execute(entity, deltaTime);
 	}
 
 	return eBehaviourResult::FAILURE;

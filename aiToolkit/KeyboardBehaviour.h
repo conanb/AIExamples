@@ -8,7 +8,7 @@ public:
 	KeyboardBehaviour();
 	virtual ~KeyboardBehaviour();
 
-	virtual eBehaviourResult execute(GameObject* gameObject, float deltaTime);
+	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
 
 	void setSpeed(float speed) { m_speed = speed; }
 
