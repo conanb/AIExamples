@@ -4,7 +4,7 @@
 #include <list>
 #include <functional>
 
-namespace Pathfinding {
+namespace graph {
 
 class Node;
 
@@ -79,4 +79,4 @@ private:
 	Search() {}
 };
 
-}
+} // namespace graph

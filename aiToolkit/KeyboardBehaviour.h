@@ -2,6 +2,8 @@
 
 #include "Behaviour.h"
 
+namespace ai {
+
 class KeyboardBehaviour : public Behaviour {
 public:
 
@@ -16,3 +18,5 @@ private:
 
 	float m_speed;
 };
+
+} // namespace ai

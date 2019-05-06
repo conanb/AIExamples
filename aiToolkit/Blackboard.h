@@ -5,6 +5,8 @@
 #include <list>
 #include <map>
 
+namespace ai {
+
 enum class eBlackboardDataType {
 	UNKNOWN = 0,
 	INT,
@@ -147,3 +149,5 @@ private:
 
 	std::list<BlackboardQuestion*>	m_questions;
 };
+
+} // namespace ai

@@ -1,5 +1,7 @@
 #include "FollowBehaviour.h"
 
+namespace ai {
+
 FollowBehaviour::FollowBehaviour()
 	: m_speed(1),
 	m_target(nullptr) {
@@ -41,3 +43,5 @@ eBehaviourResult FollowBehaviour::execute(Entity* entity, float deltaTime) {
 
 	return eBehaviourResult::SUCCESS;
 }
+
+} // namespace ai

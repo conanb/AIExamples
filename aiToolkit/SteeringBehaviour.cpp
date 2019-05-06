@@ -5,6 +5,8 @@
 
 #include <glm/ext.hpp>
 
+namespace ai {
+
 eBehaviourResult SteeringBehaviour::execute(Entity* entity, float deltaTime) {
 
 	Force force = { 0,0 };
@@ -574,3 +576,5 @@ Force FlowForce::getForce(Entity* entity) const {
 
 	return{ m_flowField[index].x * maxForce, m_flowField[index].y * maxForce };
 }
+
+} // namespace ai

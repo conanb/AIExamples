@@ -1,6 +1,8 @@
 #include "KeyboardBehaviour.h"
 #include "Input.h"
 
+namespace ai {
+
 KeyboardBehaviour::KeyboardBehaviour()
 	: m_speed(1) {
 }
@@ -41,3 +43,5 @@ eBehaviourResult KeyboardBehaviour::execute(Entity* entity, float deltaTime) {
 
 	return eBehaviourResult::SUCCESS;
 }
+
+} // namespace ai

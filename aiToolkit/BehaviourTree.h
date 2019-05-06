@@ -3,6 +3,8 @@
 #include "Behaviour.h"
 #include <iostream>
 
+namespace ai {
+
 // collection of sub-behaviours
 class CompositeBehaviour : public Behaviour {
 public:
@@ -245,3 +247,5 @@ protected:
 	float		m_cooldown;
 	Behaviour*	m_child;
 };
+
+} // namespace ai

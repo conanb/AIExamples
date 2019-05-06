@@ -2,6 +2,8 @@
 
 #include "State.h"
 
+namespace ai {
+
 // could be replaced with a vector2
 struct Force {
 	float x, y;
@@ -276,3 +278,5 @@ protected:
 	int m_rows, m_cols;
 	float m_cellSize;
 };
+
+} // namespace ai

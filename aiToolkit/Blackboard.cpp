@@ -1,5 +1,7 @@
 #include "Blackboard.h"
 
+namespace ai {
+
 void Blackboard::clearData() {
 
 	for (auto data : m_data)
@@ -206,3 +208,5 @@ void Blackboard::runArbitration() {
 	for (auto question : remove)
 		m_questions.remove(question);
 }
+
+} // namespace ai

@@ -2,7 +2,7 @@
 
 #include <set>
 
-namespace Pathfinding {
+namespace graph {
 
 bool Search::dijkstra(Node* start, Node* end, std::list<Node*>& path) {
 
@@ -219,4 +219,4 @@ bool Search::aStar(Node* start, Node* end, std::list<Node*>& path, HeuristicChec
 	return false;
 }
 
-}
+} // namespace graph

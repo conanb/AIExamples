@@ -2,6 +2,8 @@
 
 #include "Entity.h"
 
+namespace ai {
+
 // condition is also a behaviour so that it can work within a behaviour tree
 class Condition : public Behaviour {
 public:
@@ -98,3 +100,5 @@ private:
 
 	const Condition* m_condition;
 };
+
+} // namespace ai

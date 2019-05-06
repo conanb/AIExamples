@@ -4,6 +4,8 @@
 #include "Condition.h"
 #include <vector>
 
+namespace ai {
+
 class State;
 
 class Transition {
@@ -82,3 +84,5 @@ protected:
 	std::vector<Transition*>	m_transitions;
 	std::vector<Condition*>		m_conditions;
 };
+
+} // namespace ai

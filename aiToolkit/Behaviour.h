@@ -2,6 +2,8 @@
 
 #include "Entity.h"
 
+namespace ai {
+
 enum eBehaviourResult {
 	SUCCESS,
 	FAILURE,
@@ -19,3 +21,5 @@ public:
 	virtual eBehaviourResult execute(Entity* entity, float deltaTime) = 0;
 
 };
+
+} // namespace ai

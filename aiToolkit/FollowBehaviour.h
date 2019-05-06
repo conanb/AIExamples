@@ -2,6 +2,8 @@
 
 #include "Behaviour.h"
 
+namespace ai {
+
 class FollowBehaviour : public Behaviour {
 public:
 
@@ -19,3 +21,5 @@ private:
 	float		m_speed;
 	Entity*	m_target;
 };
+
+} // namespace ai

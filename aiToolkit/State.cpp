@@ -1,5 +1,7 @@
 #include "State.h"
 
+namespace ai {
+
 Transition* State::getTriggeredTransition(Entity* entity) {
 
 	for (auto transition : m_transitions) {
@@ -38,3 +40,5 @@ eBehaviourResult FiniteStateMachine::execute(Entity* entity, float deltaTime) {
 
 	return eBehaviourResult::FAILURE;
 }
+
+} // namespace ai

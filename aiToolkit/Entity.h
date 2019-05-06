@@ -4,22 +4,15 @@
 
 #include "Blackboard.h"
 
-class Behaviour;
+namespace ai {
 
-struct Vector2 {
-	float x, y;
-};
+class Behaviour;
 
 class Entity {
 public:
 
-	Entity();
-	virtual ~Entity();
-
-	// movement functions
-	void setPosition(float x, float y)			{ m_x = x; m_y = y; }
-	void getPosition(float* x, float* y) const	{ *x = m_x; *y = m_y; }
-	void translate(float x, float y)			{ m_x += x; m_y += y; }
+	Entity() {}
+	virtual ~Entity() {}
 
 	// add a behaviour
 	void addBehaviour(Behaviour* behaviour);
@@ -31,8 +24,8 @@ public:
 
 protected:
 	
-	float m_x, m_y;
-	
 	Blackboard				m_blackboard;
 	std::vector<Behaviour*>	m_behaviours;
 };
+
+} // namespace ai

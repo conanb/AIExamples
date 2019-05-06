@@ -2,6 +2,8 @@
 
 #include <GLFW/glfw3.h>
 
+namespace ai {
+
 eBehaviourResult TimeoutDecorator::execute(Entity* entity, float deltaTime) {
 
 	float currTime = (float)glfwGetTime();
@@ -17,3 +19,5 @@ eBehaviourResult TimeoutDecorator::execute(Entity* entity, float deltaTime) {
 
 	return eBehaviourResult::FAILURE;
 }
+
+} // namespace ai

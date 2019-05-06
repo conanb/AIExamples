@@ -4,6 +4,8 @@
 #include "Condition.h"
 #include "SteeringBehaviour.h"
 
+namespace ai {
+
 // base decision tree class
 class Decision {
 public:
@@ -160,3 +162,5 @@ protected:
 	std::vector<Decision*>	m_decisions;
 
 };
+
+} // namespace ai
