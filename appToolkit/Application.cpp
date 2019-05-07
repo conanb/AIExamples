@@ -4,8 +4,10 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "Input.h"
+#include "Timing.h"
 #include <imgui.h>
 #include <examples/imgui_impl_glfw.h>
+#include <examples/imgui_impl_opengl3.h>
 
 namespace app {
 
@@ -51,7 +53,11 @@ bool Application::createWindow(const char* title, int width, int height, bool fu
 	Input::create();
 
 	// imgui
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
 	
 	return true;
 }
@@ -59,6 +65,8 @@ bool Application::createWindow(const char* title, int width, int height, bool fu
 void Application::destroyWindow() {
 
 	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	Input::destroy();
 
 	glfwDestroyWindow(m_window);
@@ -70,6 +78,8 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 	// start game loop if successfully initialised
 	if (createWindow(title,width,height, fullscreen) &&
 		startup()) {
+
+		Time::initialise();
 
 		// loop while game is running
 		while (!m_gameOver) {
@@ -84,8 +94,12 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 			if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0)
 				continue;
 
+			Time::tick();
+
 			// clear imgui
+			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
 
 			update();
 
@@ -93,6 +107,7 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 
 			// draw IMGUI last
 			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 			//present backbuffer to the monitor
 			glfwSwapBuffers(m_window);

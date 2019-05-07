@@ -20,10 +20,16 @@ namespace app {
 			m_singleton = new Time();
 		}
 		static void tick() {
+			auto now = Clock::now();
+
+			m_singleton->m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_singleton->m_lastTick).count() / 1000.f;
+			m_singleton->m_now = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_singleton->m_epoch).count() / 1000.f;
+			m_singleton->m_lastTick = now;
+			m_singleton->m_frameCount++;
 		}
 
 		static void reset() {
-			m_singleton->m_epoch = Clock::now();
+			m_singleton->m_epoch = m_singleton->m_lastTick = Clock::now();
 			m_singleton->m_deltaTime = 0;
 			m_singleton->m_now = 0;
 			m_singleton->m_frameCount = 0;
@@ -44,12 +50,18 @@ namespace app {
 
 		friend class Application;
 
-		Time() { reset(); }
+		Time() {
+			m_epoch = m_lastTick = Clock::now();
+			m_deltaTime = 0;
+			m_now = 0;
+			m_frameCount = 0;
+		}
 
 		float m_now, m_deltaTime;
 		unsigned int m_frameCount;
 
 		Clock::time_point m_epoch;
+		Clock::time_point m_lastTick;
 
 		static Time* m_singleton;
 	};
