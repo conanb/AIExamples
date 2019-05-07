@@ -18,7 +18,7 @@ public:
 		RIVER = (1 << 1),
 	};
 
-	Edge() : flags(0) {}
+	Edge() : target(nullptr), cost(0), flags(0) {}
 	Edge(Node* t, float c) : target(t), cost(c), flags(0) {}
 	virtual ~Edge() {}
 

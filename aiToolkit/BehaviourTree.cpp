@@ -1,12 +1,12 @@
 #include "BehaviourTree.h"
-
+#include "Timing.h"
 #include <GLFW/glfw3.h>
 
 namespace ai {
 
-eBehaviourResult TimeoutDecorator::execute(Entity* entity, float deltaTime) {
+eBehaviourResult TimeoutDecorator::execute(Entity* entity) {
 
-	float currTime = (float)glfwGetTime();
+	float currTime = app::Time::now();
 
 	if (m_child != nullptr &&
 		(m_lastTime == -1 ||
@@ -14,7 +14,7 @@ eBehaviourResult TimeoutDecorator::execute(Entity* entity, float deltaTime) {
 
 		m_lastTime = currTime;
 
-		return m_child->execute(entity, deltaTime);
+		return m_child->execute(entity);
 	}
 
 	return eBehaviourResult::FAILURE;

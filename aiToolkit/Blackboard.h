@@ -4,6 +4,8 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 namespace ai {
 
@@ -13,6 +15,12 @@ enum class eBlackboardDataType {
 	UINT,
 	BOOL,
 	FLOAT,
+	VECTOR2,
+	VECTOR3,
+	VECTOR4,
+	MATRIX33,
+	MATRIX44,
+	QUATERNION,
 
 	POINTER,
 	OWNEDPOINTER,
@@ -73,12 +81,24 @@ public:
 	bool	set(const std::string& name, unsigned int value);
 	bool	set(const std::string& name, bool value);
 	bool	set(const std::string& name, float value);
+	bool	set(const std::string& name, const glm::vec2& value);
+	bool	set(const std::string& name, const glm::vec3& value);
+	bool	set(const std::string& name, const glm::vec4& value);
+	bool	set(const std::string& name, const glm::mat3& value);
+	bool	set(const std::string& name, const glm::mat4& value);
+	bool	set(const std::string& name, const glm::quat& value);
 
 	// return false if doesn't exist or wrong type
 	bool	get(const std::string& name, int& value);
 	bool	get(const std::string& name, unsigned int& value);
 	bool	get(const std::string& name, bool& value);
 	bool	get(const std::string& name, float& value);
+	bool	get(const std::string& name, glm::vec2& value);
+	bool	get(const std::string& name, glm::vec3& value);
+	bool	get(const std::string& name, glm::vec4& value);
+	bool	get(const std::string& name, glm::mat3& value);
+	bool	get(const std::string& name, glm::mat4& value);
+	bool	get(const std::string& name, glm::quat& value);
 
 	template <typename T>
 	bool	set(const std::string& name, T* value, bool own = false) {
@@ -140,6 +160,13 @@ private:
 			int i;
 			unsigned int ui;
 			bool b;
+
+			glm::vec2 v2;
+			glm::vec3 v3;
+			glm::vec4 v4;
+			glm::mat3 m3;
+			glm::mat4 m4;
+			glm::quat q;
 
 			void* p;
 		};

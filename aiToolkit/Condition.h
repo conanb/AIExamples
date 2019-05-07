@@ -13,7 +13,7 @@ public:
 
 	virtual bool test(Entity* entity) const = 0;
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 		if (test(entity))
 			return eBehaviourResult::SUCCESS;
 		return eBehaviourResult::FAILURE;
@@ -65,19 +65,13 @@ public:
 
 	virtual bool test(Entity* entity) const {
 		// get target position
-		float tx = 0, ty = 0;
-		m_target->getPosition(&tx, &ty);
+		auto target = m_target->getPosition();
 
 		// get my position
-		float x = 0, y = 0;
-		entity->getPosition(&x, &y);
+		auto position = entity->getPosition();
 
-		// compare the two and get the distance between them
-		float xDiff = tx - x;
-		float yDiff = ty - y;
-		float distance = sqrtf(xDiff * xDiff + yDiff * yDiff);
-
-		return distance <= m_range;
+		// compare the two
+		return glm::distance(target, position) <= m_range;
 	}
 
 private:

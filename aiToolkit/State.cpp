@@ -1,4 +1,5 @@
 #include "State.h"
+#include "Timing.h"
 
 namespace ai {
 
@@ -12,7 +13,7 @@ Transition* State::getTriggeredTransition(Entity* entity) {
 	return nullptr;
 }
 
-eBehaviourResult FiniteStateMachine::execute(Entity* entity, float deltaTime) {
+eBehaviourResult FiniteStateMachine::execute(Entity* entity) {
 
 	State* state = nullptr;
 	entity->getBlackboard().get("currentState", &state);
@@ -32,8 +33,8 @@ eBehaviourResult FiniteStateMachine::execute(Entity* entity, float deltaTime) {
 		}
 
 		// accumulate time and update state
-		state->m_timer += deltaTime;
-		state->update(entity, deltaTime);
+		state->m_timer += app::Time::deltaTime();
+		state->update(entity);
 
 		return eBehaviourResult::SUCCESS;
 	}

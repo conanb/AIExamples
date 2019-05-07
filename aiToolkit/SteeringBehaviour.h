@@ -1,19 +1,16 @@
 #pragma once
 
 #include "State.h"
+#include <glm/glm.hpp>
 
 namespace ai {
-
-// could be replaced with a vector2
-struct Force {
-	float x, y;
-};
 
 struct WanderData {
 	float offset;
 	float radius;
 	float jitter;
-	float x, y;
+	glm::vec3 target;
+	glm::vec3 axisWeights = { 1,1,1 };
 };
 
 // abstract class
@@ -24,7 +21,7 @@ public:
 	virtual ~SteeringForce() {}
 
 	// pure virtual function
-	virtual Force getForce(Entity* entity) const = 0;
+	virtual glm::vec3 getForce(Entity* entity) const = 0;
 };
 
 // weighted steering force
@@ -52,7 +49,7 @@ public:
 		}
 	}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual eBehaviourResult execute(Entity* entity);
 
 protected:
 
@@ -78,7 +75,7 @@ public:
 		}
 	}
 
-	virtual void update(Entity* entity, float deltaTime);
+	virtual void update(Entity* entity);
 
 protected:
 
@@ -93,7 +90,7 @@ public:
 
 	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
@@ -108,7 +105,7 @@ public:
 
 	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
@@ -123,7 +120,7 @@ public:
 
 	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
@@ -138,7 +135,7 @@ public:
 
 	void setTarget(Entity* target) { m_target = target; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
@@ -151,10 +148,9 @@ public:
 	WanderForce() {}
 	virtual ~WanderForce() {}
 
-	virtual Force getForce(Entity* entity) const;
-
+	virtual glm::vec3 getForce(Entity* entity) const;
 };
-
+/*
 // obstacles
 struct Obstacle {
 
@@ -164,7 +160,7 @@ struct Obstacle {
 	};
 
 	int type;
-	float x, y;
+	float x, y, z;
 	union {
 		float r;
 		struct {
@@ -181,13 +177,13 @@ public:
 
 	void setFeelerLength(float length) { m_feelerLength = length; }
 
-	void addSphereObstacle(float x, float y, float radius) {
-		Obstacle o = { Obstacle::SPHERE, x, y };
+	void addSphereObstacle(float x, float y, float z, float radius) {
+		Obstacle o = { Obstacle::SPHERE, x, y, z };
 		o.r = radius;
 		m_obstacles.push_back(o);
 	}
-	void addBoxObstacle(float x, float y, float w, float h) {
-		Obstacle o = { Obstacle::BOX, x, y };
+	void addBoxObstacle(float x, float y, float z, float w, float h) {
+		Obstacle o = { Obstacle::BOX, x, y, z };
 		o.w = w;
 		o.h = h;
 		m_obstacles.push_back(o);
@@ -195,7 +191,7 @@ public:
 
 	void clearObstacles() { m_obstacles.clear();  }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 public:
 
@@ -203,7 +199,7 @@ public:
 
 	std::vector<Obstacle> m_obstacles;
 };
-
+*/
 // FLOCKING FORCES
 
 class SeparationForce : public SteeringForce {
@@ -215,12 +211,12 @@ public:
 	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
 	std::vector<Entity>*	m_entities;
-	float						m_radius;
+	float					m_radius;
 };
 
 class CohesionForce : public SteeringForce {
@@ -232,12 +228,12 @@ public:
 	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
 	std::vector<Entity>*	m_entities;
-	float						m_radius;
+	float					m_radius;
 };
 
 class AlignmentForce : public SteeringForce {
@@ -249,7 +245,7 @@ public:
 	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
@@ -263,19 +259,20 @@ public:
 	FlowForce() : m_flowField(nullptr) {}
 	virtual ~FlowForce() {}
 
-	void setField(Vector2* flowField, int rows, int cols, float cellSize) {
+	void setField(glm::vec3* flowField, int rows, int cols, int depth, float cellSize) {
 		m_flowField = flowField;
 		m_rows = rows;
 		m_cols = cols;
+		m_depth = depth;
 		m_cellSize = cellSize;
 	}
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Entity* entity) const;
 
 protected:
 
-	Vector2* m_flowField;
-	int m_rows, m_cols;
+	glm::vec3* m_flowField;
+	int m_rows, m_cols, m_depth;
 	float m_cellSize;
 };
 

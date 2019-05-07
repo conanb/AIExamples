@@ -12,16 +12,16 @@ BasicApp::~BasicApp() {
 
 bool BasicApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	m_keyboardBehaviour.setSpeed(400);
 
 	m_followBehaviour.setSpeed(100);
 	m_followBehaviour.setTarget(&m_player);
 
-	m_player.setPosition(getWindowWidth() * 0.5f, getWindowHeight() * 0.5f);
+	m_player.setPosition(glm::vec3(getWindowWidth() * 0.5f, getWindowHeight() * 0.5f, 0.f));
 
 	m_player.addBehaviour(&m_keyboardBehaviour);
 	m_enemy.addBehaviour(&m_followBehaviour);
@@ -35,14 +35,14 @@ void BasicApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void BasicApp::update(float deltaTime) {
+void BasicApp::update() {
 
-	m_player.executeBehaviours(deltaTime);
-	m_enemy.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
+	m_enemy.executeBehaviours();
 
 	// exit the application
-	Input* input = Input::getInstance();
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	app::Input* input = app::Input::getInstance();
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 
@@ -54,17 +54,15 @@ void BasicApp::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
-	float x = 0, y = 0;
-
 	// draw player as a green circle
-	m_player.getPosition(&x, &y);
+	auto position = m_player.getPosition();
 	m_2dRenderer->setRenderColour(0, 1, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 	// draw enemy as a red circle
-	m_enemy.getPosition(&x, &y);
+	position = m_enemy.getPosition();
 	m_2dRenderer->setRenderColour(1, 0, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 	// draw some text
 	m_2dRenderer->setRenderColour(1, 1, 0);

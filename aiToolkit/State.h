@@ -35,7 +35,7 @@ public:
 	virtual ~State() {}
 
 	// pure virtual
-	virtual void	update(Entity* entity, float deltaTime) = 0;
+	virtual void	update(Entity* entity) = 0;
 
 	// triggers for enter / exit
 	virtual void	onEnter(Entity* entity) {}
@@ -76,7 +76,7 @@ public:
 	Transition*	addTransition(Transition* transition) {	m_transitions.push_back(transition); return transition;	}
 	Condition*	addCondition(Condition* condition) { m_conditions.push_back(condition); return condition; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual eBehaviourResult execute(Entity* entity);
 
 protected:
 

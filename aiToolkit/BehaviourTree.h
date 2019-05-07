@@ -15,7 +15,7 @@ public:
 	virtual ~CompositeBehaviour() {}
 
 	void addChild(Behaviour* child) { m_children.push_back(child); m_runningBehaviour = m_children.end(); }
-	unsigned int getChildCount() const { return m_children.size(); }
+	size_t getChildCount() const { return m_children.size(); }
 
 protected:
 
@@ -30,7 +30,7 @@ public:
 	SequenceBehaviour() {}
 	virtual ~SequenceBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		auto iter = m_runningBehaviour;
 
@@ -41,7 +41,7 @@ public:
 		
 		while (iter != m_children.end()) {
 
-			auto result = (*iter)->execute(entity, deltaTime);
+			auto result = (*iter)->execute(entity);
 
 			if (result == eBehaviourResult::FAILURE)
 				return eBehaviourResult::FAILURE;
@@ -64,7 +64,7 @@ public:
 	SelectorBehaviour() {}
 	virtual ~SelectorBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		auto iter = m_runningBehaviour;
 
@@ -75,7 +75,7 @@ public:
 
 		while (iter != m_children.end()) {
 
-			auto result = (*iter)->execute(entity, deltaTime);
+			auto result = (*iter)->execute(entity);
 
 			if (result == eBehaviourResult::SUCCESS)
 				return eBehaviourResult::SUCCESS;
@@ -99,12 +99,12 @@ public:
 
 	void setIndex(unsigned int index) { m_index = index; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 		if (m_index < 0 ||
 			m_index >= m_children.size())
 			return eBehaviourResult::FAILURE;
 
-		return m_children[m_index]->execute(entity, deltaTime);
+		return m_children[m_index]->execute(entity);
 	}
 
 protected:
@@ -118,12 +118,12 @@ public:
 	RandomBehaviour() {}
 	virtual ~RandomBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		if (m_children.empty())
 			return eBehaviourResult::FAILURE;
 
-		return m_children[rand() % m_children.size()]->execute(entity, deltaTime);
+		return m_children[rand() % m_children.size()]->execute(entity);
 	}
 };
 
@@ -133,7 +133,7 @@ public:
 	RandomSelectorBehaviour() {}
 	virtual ~RandomSelectorBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		// Shuffle all child nodes!
 		std::vector<Behaviour*> newList;
@@ -147,7 +147,7 @@ public:
 		m_children = newList;
 
 		// once shuffled, run as a normal selector
-		return SelectorBehaviour::execute(entity, deltaTime);
+		return SelectorBehaviour::execute(entity);
 	}
 };
 
@@ -159,11 +159,11 @@ public:
 
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		if (m_child != nullptr) {
 
-			auto r = m_child->execute(entity, deltaTime);
+			auto r = m_child->execute(entity);
 
 			switch (r) {
 			case eBehaviourResult::SUCCESS:	return eBehaviourResult::FAILURE;
@@ -188,12 +188,12 @@ public:
 	void setChild(Behaviour* child) { m_child = child; }
 	void setMessage(const char* msg) { m_message = msg; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 		if (m_child != nullptr) {
 
 			std::cout << m_message << std::endl;
 
-			return m_child->execute(entity, deltaTime);
+			return m_child->execute(entity);
 		}
 		return eBehaviourResult::FAILURE;
 	}
@@ -213,13 +213,13 @@ public:
 	void setLimit(int limit) { m_count = limit; }
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 		if (m_child != nullptr &&
 			m_count > 0) {
 
 			--m_count;
 
-			return m_child->execute(entity, deltaTime);
+			return m_child->execute(entity);
 		}
 		return eBehaviourResult::FAILURE;
 	}
@@ -239,7 +239,7 @@ public:
 	void setCooldown(float cooldown) { m_cooldown = cooldown; }
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual eBehaviourResult execute(Entity* entity);
 
 protected:
 

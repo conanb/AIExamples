@@ -18,7 +18,7 @@ public:
 	virtual ~Behaviour() {}
 
 	// pure virtual function for executing the behaviour
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) = 0;
+	virtual eBehaviourResult execute(Entity* entity) = 0;
 
 };
 

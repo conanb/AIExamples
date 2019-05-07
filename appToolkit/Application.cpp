@@ -4,7 +4,8 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "Input.h"
-#include "imgui_glfw3.h"
+#include <imgui.h>
+#include <examples/imgui_impl_glfw.h>
 
 namespace app {
 
@@ -50,14 +51,14 @@ bool Application::createWindow(const char* title, int width, int height, bool fu
 	Input::create();
 
 	// imgui
-	ImGui_Init(m_window, true);
+	ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 	
 	return true;
 }
 
 void Application::destroyWindow() {
 
-	ImGui_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
 	Input::destroy();
 
 	glfwDestroyWindow(m_window);
@@ -70,20 +71,8 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 	if (createWindow(title,width,height, fullscreen) &&
 		startup()) {
 
-		// variables for timing
-		double prevTime = glfwGetTime();
-		double currTime = 0;
-		double deltaTime = 0;
-		unsigned int frames = 0;
-		double fpsInterval = 0;
-
 		// loop while game is running
 		while (!m_gameOver) {
-
-			// update delta time
-			currTime = glfwGetTime();
-			deltaTime = currTime - prevTime;
-			prevTime = currTime;
 
 			// clear input
 			Input::getInstance()->clearStatus();
@@ -95,19 +84,10 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 			if (glfwGetWindowAttrib(m_window, GLFW_ICONIFIED) != 0)
 				continue;
 
-			// update fps every second
-			frames++;
-			fpsInterval += deltaTime;
-			if (fpsInterval >= 1.0f) {
-				m_fps = frames;
-				frames = 0;
-				fpsInterval -= 1.0f;
-			}
-
 			// clear imgui
-			ImGui_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
 
-			update(float(deltaTime));
+			update();
 
 			draw();
 

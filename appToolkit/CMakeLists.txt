@@ -6,7 +6,12 @@ include_directories ("${PROJECT_SOURCE_DIR}/appToolkit"
                      "${PROJECT_SOURCE_DIR}/thirdparty/imgui"
                      "${PROJECT_SOURCE_DIR}/thirdparty/stb")
 
-file(GLOB LIB_SOURCE "*.h" "*.c" "*.cpp")
+file(GLOB LIB_SOURCE "*.h" "*.c" "*.cpp" 
+					 "${PROJECT_SOURCE_DIR}/thirdparty/imgui/examples/imgui_impl_glfw.h" 
+					 "${PROJECT_SOURCE_DIR}/thirdparty/imgui/examples/imgui_impl_glfw.cpp"
+					 "${PROJECT_SOURCE_DIR}/thirdparty/imgui/imgui.cpp"
+					 "${PROJECT_SOURCE_DIR}/thirdparty/imgui/imgui_draw.cpp"
+					 "${PROJECT_SOURCE_DIR}/thirdparty/imgui/imgui_widgets.cpp")
 
 add_library(appToolkit ${LIB_SOURCE})
-target_link_libraries(appToolkit glfw)
+target_link_libraries(appToolkit glfw opengl32.lib)

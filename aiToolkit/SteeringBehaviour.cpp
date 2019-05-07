@@ -1,290 +1,223 @@
 #include "SteeringBehaviour.h"
-
 #include "Intersection.h"
 #include "Blackboard.h"
-
+#include "Timing.h"
+#include "Geometry.h"
 #include <glm/ext.hpp>
 
 namespace ai {
 
-eBehaviourResult SteeringBehaviour::execute(Entity* entity, float deltaTime) {
+eBehaviourResult SteeringBehaviour::execute(Entity* entity) {
 
-	Force force = { 0,0 };
+	glm::vec3 force(0);
 
-	Vector2* velocity = nullptr;
-	// must have velocity
+	glm::vec3* velocity = nullptr;
 	if (entity->getBlackboard().get("velocity", &velocity) == false)
 		return eBehaviourResult::FAILURE;
 
-	for (auto& wf : m_forces) {
-		Force temp = wf.force->getForce(entity);
-
-		// accumulate forces
-		force.x += temp.x * wf.weight;
-		force.y += temp.y * wf.weight;
-	}
-
 	float maxVelocity = 0;
-	entity->getBlackboard().get("maxVelocity", maxVelocity);
+	if (entity->getBlackboard().get("maxVelocity", maxVelocity) == false)
+		return eBehaviourResult::FAILURE;
 
-	velocity->x += force.x * deltaTime;
-	velocity->y += force.y * deltaTime;
+	// accumulate forces
+	for (auto& wf : m_forces)
+		force += wf.force->getForce(entity) * wf.weight;
 
-	// cap velocity
-	float magnitudeSqr = velocity->x * velocity->x + velocity->y * velocity->y;
+	*velocity += force * app::Time::deltaTime();
+
+	// cap velocity (MOVE TO A VELOCITY BEHAVIOUR)
+	float magnitudeSqr = glm::dot(*velocity, *velocity);
 	if (magnitudeSqr > (maxVelocity * maxVelocity)) {
-		float magnitude = sqrt(magnitudeSqr);
-		velocity->x = velocity->x / magnitude * maxVelocity;
-		velocity->y = velocity->y / magnitude * maxVelocity;
+		*velocity /= sqrt(magnitudeSqr) * maxVelocity;
 	}
 
-	entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+	entity->translate(*velocity * app::Time::deltaTime());
 
 	return eBehaviourResult::SUCCESS;
 }
 
-void SteeringState::update(Entity* entity, float deltaTime) {
+void SteeringState::update(Entity* entity) {
 
-	Force force = { 0,0 };
+	glm::vec3 force(0);
+
+	glm::vec3* velocity = nullptr;
+	// must have velocity
+	if (entity->getBlackboard().get("velocity", &velocity) == false)
+		return;
 
 	for (auto& wf : m_forces) {
-		Force temp = wf.force->getForce(entity);
+		auto temp = wf.force->getForce(entity);
 
 		// accumulate forces
-		force.x += temp.x * wf.weight;
-		force.y += temp.y * wf.weight;
+		force += temp * wf.weight;
 	}
 
 	float maxVelocity = 0;
 	entity->getBlackboard().get("maxVelocity", maxVelocity);
 
-	Vector2* velocity = nullptr;
-	entity->getBlackboard().get("velocity", &velocity);
-
-	velocity->x += force.x * deltaTime;
-	velocity->y += force.y * deltaTime;
+	*velocity += force * app::Time::deltaTime();
 
 	// cap velocity
-	float magnitudeSqr = velocity->x * velocity->x + velocity->y * velocity->y;
+	float magnitudeSqr = glm::dot(*velocity, *velocity);
 	if (magnitudeSqr > (maxVelocity * maxVelocity)) {
 		float magnitude = sqrt(magnitudeSqr);
-		velocity->x = velocity->x / magnitude * maxVelocity;
-		velocity->y = velocity->y / magnitude * maxVelocity;
+		*velocity /= magnitude * maxVelocity;
 	}
 
-	entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+	entity->translate(*velocity * app::Time::deltaTime());
 }
 
-Force SeekForce::getForce(Entity* entity) const {
+glm::vec3 SeekForce::getForce(Entity* entity) const {
 
 	// get target position
-	float targetX = 0, targetY = 0;
-	m_target->getPosition(&targetX, &targetY);
+	auto target = m_target->getPosition();
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// get a vector to the target from "us"
-	float xDiff = targetX - x;
-	float yDiff = targetY - y;
-	float distance = (xDiff * xDiff + yDiff * yDiff);
+	auto diff = target - position;
 
 	// if not at the target then move towards them
-	if (distance > 0) {
-
-		distance = sqrt(distance);
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
-	}
+	if (glm::dot(diff, diff) > 0)
+		diff = glm::normalize(diff);
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return { xDiff * maxForce, yDiff * maxForce };
+	return diff * maxForce;
 }
 
-Force FleeForce::getForce(Entity* entity) const {
+glm::vec3 FleeForce::getForce(Entity* entity) const {
 
 	// get target position
-	float tx = 0, ty = 0;
-	m_target->getPosition(&tx, &ty);
+	auto target = m_target->getPosition();
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	float xDiff = x - tx;
-	float yDiff = y - ty;
-	float distance = (xDiff * xDiff + yDiff * yDiff);
+	auto diff = target - position;
 
 	// if not at the target then move towards them
-	if (distance > 0) {
-
-		distance = sqrt(distance);
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
-	}
+	if (glm::dot(diff, diff) > 0)
+		diff = glm::normalize(diff);
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ xDiff * maxForce, yDiff * maxForce };
+	return diff * maxForce;
 }
 
-Force PursueForce::getForce(Entity* entity) const {
+glm::vec3 PursueForce::getForce(Entity* entity) const {
 
 	// get target position
-	float tx = 0, ty = 0;
-	m_target->getPosition(&tx, &ty);
+	auto target = m_target->getPosition();
 
 	// get target's velocity
-	Vector2* velocity = nullptr;
+	glm::vec3* velocity = nullptr;
+	entity->getBlackboard().get("velocity", &velocity);
+
+	float maxForce = 0;
+	entity->getBlackboard().get("maxForce", maxForce);
+
+	// add velocity to target
+	target += *velocity;
+
+	// get my position
+	auto position = entity->getPosition();
+
+	// compare the two and get the distance between them
+	auto diff = target - position;
+
+	// if not at the target then move towards them
+	if (glm::dot(diff, diff) > 0) 
+		diff = glm::normalize(diff);
+
+	return diff * maxForce;
+}
+
+glm::vec3 EvadeForce::getForce(Entity* entity) const {
+
+	// get target position
+	auto target = m_target->getPosition();
+
+	// get target's velocity
+	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
 
 	// add velocity to target
-	tx += velocity->x;
-	ty += velocity->y;
+	target += *velocity;
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	float xDiff = tx - x;
-	float yDiff = ty - y;
-	float distance = (xDiff * xDiff + yDiff * yDiff);
+	auto diff = position - target;
 
 	// if not at the target then move towards them
-	if (distance > 0) {
-
-		distance = sqrt(distance);
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
-	}
+	if (glm::dot(diff, diff) > 0)
+		diff = glm::normalize(diff);
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ xDiff * maxForce, yDiff * maxForce };
+	return diff * maxForce;
 }
 
-Force EvadeForce::getForce(Entity* entity) const {
-
-	// get target position
-	float tx = 0, ty = 0;
-	m_target->getPosition(&tx, &ty);
-
-	// get target's velocity
-	Vector2* velocity = nullptr;
-	entity->getBlackboard().get("velocity", &velocity);
-
-	// add velocity to target
-	tx += velocity->x;
-	ty += velocity->y;
-
-	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
-
-	// compare the two and get the distance between them
-	float xDiff = x - tx;
-	float yDiff = y - ty;
-	float distance = (xDiff * xDiff + yDiff * yDiff);
-
-	// if not at the target then move towards them
-	if (distance > 0) {
-
-		distance = sqrt(distance);
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
-	}
-
-	float maxForce = 0;
-	entity->getBlackboard().get("maxForce", maxForce);
-
-	return{ xDiff * maxForce, yDiff * maxForce };
-}
-
-Force WanderForce::getForce(Entity* entity) const {
+glm::vec3 WanderForce::getForce(Entity* entity) const {
 
 	WanderData* wd = nullptr;
 	if (entity->getBlackboard().get("wanderData", &wd) == false) {
-		return{ 0,0 };
+		return glm::vec3(0);
 	}
 
 	// generate a random circular direction with a radius of "jitter"
-	glm::vec2 jitterOffset = glm::circularRand(wd->jitter);
+	auto jitterOffset = glm::sphericalRand(wd->jitter) * wd->axisWeights;
 
-	float wanderX = wd->x, wanderY = wd->y;
+	auto wander = wd->target;
 
 	// apply the jitter to our current wander target
-	wanderX += jitterOffset.x;
-	wanderY += jitterOffset.y;
+	wander += jitterOffset;
 
 	// bring it back to a radius around the game object
-	float magnitude = sqrt(wanderX * wanderX + wanderY * wanderY);
-	wanderX = (wanderX / magnitude) * wd->radius;
-	wanderY = (wanderY / magnitude) * wd->radius;
+	wander = glm::normalize(wander) * wd->radius;
 
 	// store the target back into the game object
-	wd->x = wanderX;
-	wd->y = wanderY;
+	wd->target = wander;
 
 	// access the game object's velocity as a unit vector (normalised)
-	Vector2* velocity = nullptr;
+	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
 	float vx = velocity->x;
 	float vy = velocity->y;
 
 	// normalise and protect from divide-by-zero
-	magnitude = vx * vx + vy * vy;
-	if (magnitude > 0) {
-		magnitude = sqrt(magnitude);
-		vx /= magnitude;
-		vy /= magnitude;
-	}
+	if (glm::dot(*velocity, *velocity) > 0)
+		*velocity = glm::normalize(*velocity);
 	
 	// combine velocity direction with wander target to offset
-	wanderX += vx * wd->offset;
-	wanderY += vy * wd->offset;
+	wander += *velocity * wd->offset;
 
 	// normalise the new direction
-	magnitude = wanderX * wanderX + wanderY * wanderY;
-	if (magnitude > 0) {
-
-		magnitude = sqrt(magnitude);
-		wanderX /= magnitude;
-		wanderY /= magnitude;
-	}
+	if (glm::dot(wander, wander) > 0)
+		wander = glm::normalize(wander);
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ wanderX * maxForce, wanderY * maxForce };
+	return wander * maxForce;
 }
 
-Force ObstacleAvoidanceForce::getForce(Entity* entity) const {
+/*glm::vec3 ObstacleAvoidanceForce::getForce(Entity* entity) const {
 
-	Force force = {0, 0};
+	glm::vec3 force(0);
 
 	// create feeler
 	float x, y;
 	entity->getPosition(&x, &y);
-	Vector2* velocity = nullptr;
+
+	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
 
 	float ix, iy, t;
@@ -383,198 +316,159 @@ Force ObstacleAvoidanceForce::getForce(Entity* entity) const {
 	entity->getBlackboard().get("maxForce", maxForce);
 
 	return{ force.x * maxForce, force.y * maxForce };
-}
+}*/
 
-Force SeparationForce::getForce(Entity* entity) const {
+glm::vec3 SeparationForce::getForce(Entity* entity) const {
 	
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
-	Force force = {};
+	glm::vec3 force(0);
 	int neighbours = 0;
 
-	for (auto& entity : *m_entities) {
+	for (auto& e : *m_entities) {
 
-		if (entity == &entity) continue;
+		if (&e == entity) continue;
 
-		float tx = 0, ty = 0;
-		entity.getPosition(&tx, &ty);
+		auto target = e.getPosition();
 
 		// compare the two and get the distance between them
-		float xDiff = x - tx;
-		float yDiff = y - ty;
-		float distanceSqr = (xDiff * xDiff + yDiff * yDiff);
+		auto diff = position - target;
+		float distanceSqr = glm::dot(diff, diff);
 
 		// is it within radius?
 		if (distanceSqr > 0 &&
 			distanceSqr < (m_radius * m_radius)) {
 
 			// push away from entity!
-			distanceSqr = sqrt(distanceSqr);
-
-			// need to make the difference the length of 1
-			// this is so movement can be "pixels per second"
-			xDiff /= distanceSqr;
-			yDiff /= distanceSqr;
+			diff = glm::normalize(diff);
 
 			neighbours++;
-			force.x += xDiff;
-			force.y += yDiff;
+			force += diff;
 		}
 	}
 
-	if (neighbours > 0) {
-
-		force.x /= neighbours;
-		force.y /= neighbours;
-	}
+	if (neighbours > 0)
+		force /= (float)neighbours;
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return { force.x * maxForce, force.y * maxForce };
+	return force * maxForce;
 }
 
-Force CohesionForce::getForce(Entity* entity) const {
+glm::vec3 CohesionForce::getForce(Entity* entity) const {
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
-	Force force = {};
+	glm::vec3 force(0);
 	int neighbours = 0;
 
-	for (auto& entity : *m_entities) {
+	for (auto& e : *m_entities) {
 
-		if (entity == &entity) continue;
+		if (&e == entity) continue;
 
-		float tx = 0, ty = 0;
-		entity.getPosition(&tx, &ty);
+		auto target = e.getPosition();
 
 		// compare the two and get the distance between them
-		float xDiff = x - tx;
-		float yDiff = y - ty;
-		float distanceSqr = (xDiff * xDiff + yDiff * yDiff);
+		auto diff = position - target;
+		float distanceSqr = glm::dot(diff, diff);
 
 		// is it within radius?
 		if (distanceSqr > 0 &&
 			distanceSqr < (m_radius * m_radius)) {
-
 			neighbours++;
-			force.x += tx;
-			force.y += ty;
+			force += target;
 		}
 	}
 
 	if (neighbours > 0) {
 
-		force.x = force.x / neighbours - x;
-		force.y = force.y / neighbours - y;
+		force = force / (float)neighbours - position;
 
 		// normalise direction
-		float d = force.x * force.x + force.y * force.y;
-		if (d > 0) {
-			d = sqrt(d);
-			force.x /= d;
-			force.y /= d;
-		}
+		if (glm::dot(force, force) > 0)
+			force = glm::normalize(force);
 	}
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ force.x * maxForce, force.y * maxForce };
+	return force * maxForce;
 }
 
-Force AlignmentForce::getForce(Entity* entity) const {
+glm::vec3 AlignmentForce::getForce(Entity* entity) const {
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
-	Force force = {};
+	glm::vec3 force(0);
 	int neighbours = 0;
 
-	for (auto& entity : *m_entities) {
+	for (auto& e : *m_entities) {
 
-		if (entity == &entity) continue;
+		if (&e == entity) continue;
 
-		float tx = 0, ty = 0;
-		entity.getPosition(&tx, &ty);
+		auto target = e.getPosition();
 
 		// compare the two and get the distance between them
-		float xDiff = x - tx;
-		float yDiff = y - ty;
-		float distanceSqr = (xDiff * xDiff + yDiff * yDiff);
+		auto diff = position - target;
+		float distanceSqr = glm::dot(diff, diff);
 
 		// is it within radius?
 		if (distanceSqr > 0 &&
 			distanceSqr < (m_radius * m_radius)) {
 
-			Vector2* v = nullptr;
-			entity.getBlackboard().get("velocity", &v);
+			glm::vec3* v = nullptr;
+			e.getBlackboard().get("velocity", &v);
 
-			distanceSqr = v->x * v->x + v->y * v->y;
+			distanceSqr = glm::dot(*v, *v);
 			if (distanceSqr > 0) {
-				distanceSqr = sqrt(distanceSqr);
-
-
-				
 				neighbours++;
-				force.x += v->x;
-				force.y += v->y;
+				force += *v;
 			}
 		}
 	}
 
 	if (neighbours > 0) {
 
-		Vector2* v = nullptr;
+		glm::vec3* v = nullptr;
 		entity->getBlackboard().get("velocity", &v);
 
-		force.x = force.x / neighbours - v->x;
-		force.y = force.y / neighbours - v->y;
+		force = force / (float)neighbours - *v;
 
 		// normalise direction
-		float d = force.x * force.x + force.y * force.y;
-		if (d > 0) {
-			d = sqrt(d);
-			force.x /= d;
-			force.y /= d;
-		}
+		if (glm::dot(force, force) > 0)
+			force = glm::normalize(force);
 	}
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ force.x * maxForce, force.y * maxForce };
+	return force * maxForce;
 }
 
-Force FlowForce::getForce(Entity* entity) const {
+glm::vec3 FlowForce::getForce(Entity* entity) const {
 
 	if (m_flowField == nullptr)
-		return { 0, 0 };
+		return {};
 
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
-	int ix = int(x / m_cellSize);
-	int iy = int(y / m_cellSize);
+	glm::ivec3 cell = position / m_cellSize;
 
 	// off-grid?
-	if (ix < 0 ||
-		ix >= m_cols ||
-		iy < 0 ||
-		iy >= m_rows)
-		return { 0,0 };
+	if (cell < glm::ivec3(0) ||
+		cell >= glm::ivec3(m_cellSize, m_cellSize, m_cellSize))
+		return {};
 
-	int index = iy * m_cols + ix;
+	int index = cell.z * (m_cols * m_rows) + cell.y * m_cols + cell.x;
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ m_flowField[index].x * maxForce, m_flowField[index].y * maxForce };
+	return m_flowField[index] * maxForce;
 }
 
 } // namespace ai

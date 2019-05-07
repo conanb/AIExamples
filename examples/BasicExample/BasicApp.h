@@ -7,7 +7,7 @@
 #include "KeyboardBehaviour.h"
 #include "FollowBehaviour.h"
 
-class BasicApp : public Application {
+class BasicApp : public app::Application {
 public:
 
 	BasicApp();
@@ -16,17 +16,17 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
-	Entity			m_player;
-	KeyboardBehaviour	m_keyboardBehaviour;
+	ai::Entity			m_player;
+	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	Entity			m_enemy;
-	FollowBehaviour		m_followBehaviour;
+	ai::Entity			m_enemy;
+	ai::FollowBehaviour		m_followBehaviour;
 };

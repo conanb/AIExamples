@@ -13,7 +13,7 @@ public:
 	Decision() {}
 	virtual ~Decision() {}
 	
-	virtual void makeDecision(Entity* entity, float deltaTime) = 0;
+	virtual void makeDecision(Entity* entity) = 0;
 };
 
 // conditional decision
@@ -33,16 +33,16 @@ public:
 	void setTrueBranch(Decision* decision) { m_trueBranch = decision; }
 	void setFalseBranch(Decision* decision) { m_falseBranch = decision; }
 
-	virtual void makeDecision(Entity* entity, float deltaTime) {
+	virtual void makeDecision(Entity* entity) {
 
 		if (m_condition != nullptr &&
 			m_trueBranch != nullptr &&
 			m_falseBranch != nullptr) {
 
 			if (m_condition->test(entity))
-				m_trueBranch->makeDecision(entity, deltaTime);
+				m_trueBranch->makeDecision(entity);
 			else
-				m_falseBranch->makeDecision(entity, deltaTime);
+				m_falseBranch->makeDecision(entity);
 		}
 	}
 
@@ -63,10 +63,10 @@ public:
 
 	void setDecision(Decision* decision) { m_decision = decision; }
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual eBehaviourResult execute(Entity* entity) {
 
 		if (m_decision != nullptr) {
-			m_decision->makeDecision(entity, deltaTime);
+			m_decision->makeDecision(entity);
 			return eBehaviourResult::SUCCESS;
 		}
 		return eBehaviourResult::FAILURE;
@@ -87,10 +87,10 @@ public:
 
 	void setBehaviour(Behaviour* behaviour) { m_behaviour = behaviour; }
 
-	virtual void makeDecision(Entity* entity, float deltaTime) {
+	virtual void makeDecision(Entity* entity) {
 
 		if (m_behaviour != nullptr)
-			m_behaviour->execute(entity, deltaTime);
+			m_behaviour->execute(entity);
 	}
 
 protected:
@@ -107,9 +107,9 @@ public:
 
 	void setForce(SteeringForce* force) { m_force = force; }
 
-	virtual void makeDecision(Entity* entity, float deltaTime) {
+	virtual void makeDecision(Entity* entity) {
 
-		Vector2* velocity = nullptr;
+		glm::vec3* velocity = nullptr;
 
 		// must have velocity
 		if (entity->getBlackboard().get("velocity", &velocity) == false)
@@ -118,22 +118,18 @@ public:
 		// apply force to velocity
 		auto force = m_force->getForce(entity);
 
-		velocity->x += force.x * deltaTime;
-		velocity->y += force.y * deltaTime;
+		*velocity += force * app::Time::deltaTime();
 
 		float maxVelocity = 0;
 		entity->getBlackboard().get("maxVelocity", maxVelocity);
 
 		// cap velocity
-		float magnitudeSqr = velocity->x * velocity->x + velocity->y * velocity->y;
-		if (magnitudeSqr > (maxVelocity * maxVelocity)) {
-			float magnitude = sqrt(magnitudeSqr);
-			velocity->x = velocity->x / magnitude * maxVelocity;
-			velocity->y = velocity->y / magnitude * maxVelocity;
-		}
+		float magnitudeSqr = glm::dot(*velocity, *velocity);
+		if (magnitudeSqr > (maxVelocity * maxVelocity))
+			*velocity /= sqrt(magnitudeSqr) * maxVelocity;
 
 		// move the game object
-		entity->translate(velocity->x * deltaTime, velocity->y * deltaTime);
+		entity->translate(*velocity * app::Time::deltaTime());
 	}
 
 protected:
@@ -150,10 +146,10 @@ public:
 
 	void addDecision(Decision* decision) { m_decisions.push_back(decision); }
 	
-	virtual void makeDecision(Entity* entity, float deltaTime) {
+	virtual void makeDecision(Entity* entity) {
 
 		if (m_decisions.empty() == false) {
-			m_decisions[rand() % m_decisions.size()]->makeDecision(entity, deltaTime);
+			m_decisions[rand() % m_decisions.size()]->makeDecision(entity);
 		}
 	}
 
