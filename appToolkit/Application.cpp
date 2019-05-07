@@ -158,4 +158,14 @@ float Application::getTime() const {
 	return (float)glfwGetTime();
 }
 
+void Application::screenWrap(glm::vec3& p) {
+	// wrap position around the screen
+	p.x = fmod(p.x, (float)getWindowWidth());
+	if (p.x < 0)
+		p.x += getWindowWidth();
+	p.y = fmod(p.y, (float)getWindowHeight());
+	if (p.y < 0)
+		p.y += getWindowHeight();
+}
+
 } // namespace app

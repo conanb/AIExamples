@@ -2,11 +2,11 @@
 
 #include "Application.h"
 #include "Renderer2D.h"
-
+#include "Random.h"
 #include "Entity.h"
 #include "SteeringBehaviour.h"
 
-class FlockingApp : public Application {
+class FlockingApp : public app::Application {
 public:
 
 	FlockingApp();
@@ -15,23 +15,22 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
+	
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*			m_font;
 
-	void screenWrap(float& x, float& y);
+	std::vector<ai::Entity>	m_entities;
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	ai::SteeringBehaviour	m_steeringBehaviour;
 
-	std::vector<Entity>	m_entities;
+	ai::WanderForce			m_wander;
+	ai::SeparationForce		m_separation;
+	ai::CohesionForce		m_cohesion;
+	ai::AlignmentForce		m_alignment;
 
-	SteeringBehaviour	m_steeringBehaviour;
-
-	WanderForce			m_wander;
-	SeparationForce		m_separation;
-	CohesionForce		m_cohesion;
-	AlignmentForce		m_alignment;
-
+	app::Random				m_rand;
 };

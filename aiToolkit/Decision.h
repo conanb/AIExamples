@@ -3,6 +3,7 @@
 #include "Behaviour.h"
 #include "Condition.h"
 #include "SteeringBehaviour.h"
+#include "Timing.h"
 
 namespace ai {
 

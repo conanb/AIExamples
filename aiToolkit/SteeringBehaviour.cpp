@@ -26,10 +26,8 @@ eBehaviourResult SteeringBehaviour::execute(Entity* entity) {
 	*velocity += force * app::Time::deltaTime();
 
 	// cap velocity (MOVE TO A VELOCITY BEHAVIOUR)
-	float magnitudeSqr = glm::dot(*velocity, *velocity);
-	if (magnitudeSqr > (maxVelocity * maxVelocity)) {
-		*velocity /= sqrt(magnitudeSqr) * maxVelocity;
-	}
+	if (glm::dot(*velocity, *velocity) > (maxVelocity * maxVelocity))
+		*velocity = glm::normalize(*velocity) * maxVelocity;
 
 	entity->translate(*velocity * app::Time::deltaTime());
 
@@ -40,17 +38,14 @@ void SteeringState::update(Entity* entity) {
 
 	glm::vec3 force(0);
 
-	glm::vec3* velocity = nullptr;
 	// must have velocity
+	glm::vec3* velocity = nullptr;
 	if (entity->getBlackboard().get("velocity", &velocity) == false)
 		return;
 
-	for (auto& wf : m_forces) {
-		auto temp = wf.force->getForce(entity);
-
-		// accumulate forces
-		force += temp * wf.weight;
-	}
+	// accumulate forces
+	for (auto& wf : m_forces)
+		force += wf.force->getForce(entity) * wf.weight;
 
 	float maxVelocity = 0;
 	entity->getBlackboard().get("maxVelocity", maxVelocity);
@@ -58,11 +53,8 @@ void SteeringState::update(Entity* entity) {
 	*velocity += force * app::Time::deltaTime();
 
 	// cap velocity
-	float magnitudeSqr = glm::dot(*velocity, *velocity);
-	if (magnitudeSqr > (maxVelocity * maxVelocity)) {
-		float magnitude = sqrt(magnitudeSqr);
-		*velocity /= magnitude * maxVelocity;
-	}
+	if (glm::dot(*velocity, *velocity) > (maxVelocity * maxVelocity))
+		*velocity = glm::normalize(*velocity) * maxVelocity;
 
 	entity->translate(*velocity * app::Time::deltaTime());
 }
@@ -97,7 +89,7 @@ glm::vec3 FleeForce::getForce(Entity* entity) const {
 	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	auto diff = target - position;
+	auto diff = position - target;
 
 	// if not at the target then move towards them
 	if (glm::dot(diff, diff) > 0)
@@ -116,7 +108,7 @@ glm::vec3 PursueForce::getForce(Entity* entity) const {
 
 	// get target's velocity
 	glm::vec3* velocity = nullptr;
-	entity->getBlackboard().get("velocity", &velocity);
+	m_target->getBlackboard().get("velocity", &velocity);
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
@@ -144,7 +136,7 @@ glm::vec3 EvadeForce::getForce(Entity* entity) const {
 
 	// get target's velocity
 	glm::vec3* velocity = nullptr;
-	entity->getBlackboard().get("velocity", &velocity);
+	m_target->getBlackboard().get("velocity", &velocity);
 
 	// add velocity to target
 	target += *velocity;
@@ -172,13 +164,11 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 		return glm::vec3(0);
 	}
 
-	// generate a random circular direction with a radius of "jitter"
-	auto jitterOffset = glm::sphericalRand(wd->jitter) * wd->axisWeights;
-
 	auto wander = wd->target;
 
 	// apply the jitter to our current wander target
-	wander += jitterOffset;
+	// generate a random circular direction with a radius of "jitter"
+	wander += glm::sphericalRand(wd->jitter) * wd->axisWeights;
 
 	// bring it back to a radius around the game object
 	wander = glm::normalize(wander) * wd->radius;
@@ -189,8 +179,6 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 	// access the game object's velocity as a unit vector (normalised)
 	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
-	float vx = velocity->x;
-	float vy = velocity->y;
 
 	// normalise and protect from divide-by-zero
 	if (glm::dot(*velocity, *velocity) > 0)
@@ -423,8 +411,7 @@ glm::vec3 AlignmentForce::getForce(Entity* entity) const {
 			glm::vec3* v = nullptr;
 			e.getBlackboard().get("velocity", &v);
 
-			distanceSqr = glm::dot(*v, *v);
-			if (distanceSqr > 0) {
+			if (glm::dot(*v, *v) > 0) {
 				neighbours++;
 				force += *v;
 			}

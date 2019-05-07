@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/fwd.hpp>
+
 // forward declared structure for access to GLFW window
 struct GLFWwindow;
 
@@ -54,6 +56,8 @@ public:
 	
 	// returns time since application started
 	float getTime() const;
+
+	void screenWrap(glm::vec3& p);
 
 protected:
 

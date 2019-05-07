@@ -12,9 +12,9 @@ FlockingApp::~FlockingApp() {
 
 bool FlockingApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 	
 	m_entities.resize(200);
 
@@ -34,27 +34,27 @@ bool FlockingApp::startup() {
 
 	for (auto& entity : m_entities) {
 
-		float a = rand() / (float)RAND_MAX * 3.14159f * 2;
+		float a = m_rand.nextReal() * 3.14159f * 2;
 
-		Vector2* v = new Vector2();
+		glm::vec3* v = new glm::vec3();
 		v->x = sinf(a) * 150;
 		v->y = cosf(a) * 150;
 		entity.getBlackboard().set("velocity", v, true);
 		entity.getBlackboard().set("maxForce", 250.f);
 		entity.getBlackboard().set("maxVelocity", 100.f);
 
-		WanderData* wd = new WanderData();
+		ai::WanderData* wd = new ai::WanderData();
 		wd->offset = 100;
 		wd->radius = 75;
 		wd->jitter = 25;
-		wd->x = 0;
-		wd->y = 0;
+		wd->target = { 0 };
+		wd->axisWeights = { 1, 1, 0 };
 		entity.getBlackboard().set("wanderData", wd, true);
 
 		entity.addBehaviour(&m_steeringBehaviour);
 
-		entity.setPosition(rand() / (float)RAND_MAX * getWindowWidth(),
-						   rand() / (float)RAND_MAX * getWindowHeight());
+		entity.setPosition({ m_rand.nextReal() * getWindowWidth(),
+			m_rand.nextReal() * getWindowHeight(), 0.0f });
 	}
 
 	return true;
@@ -66,19 +66,16 @@ void FlockingApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void FlockingApp::update(float deltaTime) {
-	
-	// HACK: can get laggy so just limiting dt for now
-	deltaTime = 1 / 60.f;
+void FlockingApp::update() {
 
 	for (auto& entity : m_entities)
-		entity.executeBehaviours(deltaTime);
+		entity.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 
@@ -90,15 +87,15 @@ void FlockingApp::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
-	float x, y;
+	glm::vec3 position;
 
 	for (auto& entity : m_entities) {
 
-		entity.getPosition(&x, &y);
-		screenWrap(x, y);
-		entity.setPosition(x, y);
+		position = entity.getPosition();
+		screenWrap(position);
+		entity.setPosition(position);
 
-		m_2dRenderer->drawBox(x, y, 4, 4);
+		m_2dRenderer->drawBox(position.x, position.y, 4, 4);
 	}
 	
 	// output some text
@@ -106,14 +103,4 @@ void FlockingApp::draw() {
 
 	// done drawing sprites
 	m_2dRenderer->end();
-}
-
-void FlockingApp::screenWrap(float& x, float& y) {
-	// wrap position around the screen
-	x = fmod(x, (float)getWindowWidth());
-	if (x < 0)
-		x += getWindowWidth();
-	y = fmod(y, (float)getWindowHeight());
-	if (y < 0)
-		y += getWindowHeight();
 }
