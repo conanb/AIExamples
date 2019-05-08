@@ -22,11 +22,11 @@ public:
 protected:
 
 	app::Renderer2D*	m_2dRenderer;
-	app::Font*		m_font;
+	app::Font*			m_font;
 
-	ai::Entity			m_player;
+	ai::Entity				m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Entity			m_enemy;
+	ai::Entity				m_enemy;
 	ai::FollowBehaviour		m_followBehaviour;
 };

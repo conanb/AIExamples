@@ -14,36 +14,36 @@ BehaviourTreesApp::~BehaviourTreesApp() {
 
 bool BehaviourTreesApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	// setup player
 	m_keyboardBehaviour.setSpeed(400);
 	m_player.addBehaviour(&m_keyboardBehaviour);
-	m_player.setPosition(getWindowWidth() * 0.5f, getWindowHeight() * 0.5f);
+	m_player.setPosition({ getWindowWidth() * 0.5f, getWindowHeight() * 0.5f, 0.0f });
 
 	// obstacle avoidance force used by decisions
-	auto obstacleForce = new ObstacleAvoidanceForce();
-	obstacleForce->setFeelerLength(80);
+//	auto obstacleForce = new ObstacleAvoidanceForce();
+//	obstacleForce->setFeelerLength(80);
 
 	// aimless wandering forces
-	auto wanderingBehaviour = new SteeringBehaviour();
-	wanderingBehaviour->addForce(new WanderForce());
-	wanderingBehaviour->addForce(obstacleForce);
+	auto wanderingBehaviour = new ai::SteeringBehaviour();
+	wanderingBehaviour->addForce(new ai::WanderForce());
+//	wanderingBehaviour->addForce(obstacleForce);
 
 	// attacking steering forces
-	auto attackingBehaviour = new SteeringBehaviour();
-	attackingBehaviour->addForce(new SeekForce(&m_player), 0.8f);
-	attackingBehaviour->addForce(obstacleForce);
+	auto attackingBehaviour = new ai::SteeringBehaviour();
+	attackingBehaviour->addForce(new ai::SeekForce(&m_player), 0.8f);
+//	attackingBehaviour->addForce(obstacleForce);
 
 	// conditions
-	auto within200Condition = new WithinRangeCondition(&m_player, 200);
-	auto within50Condition = new WithinRangeCondition(&m_player, 50);
+	auto within200Condition = new ai::WithinRangeCondition(&m_player, 200);
+	auto within50Condition = new ai::WithinRangeCondition(&m_player, 50);
 
 	// behaviour tree branches
-	auto guardBehaviour = new SelectorBehaviour();
-	auto seekBehaviour = new SequenceBehaviour();
+	auto guardBehaviour = new ai::SelectorBehaviour();
+	auto seekBehaviour = new ai::SequenceBehaviour();
 
 	// structure the tree
 	guardBehaviour->addChild(within50Condition);
@@ -63,17 +63,17 @@ bool BehaviourTreesApp::startup() {
 	for (auto& enemy : m_enemy) {
 
 		enemy.addBehaviour(m_guardBehaviour);
-		enemy.setPosition(50, 50);
+		enemy.setPosition({ 50, 50,0 });
 
 		// add some steering data to the blackboard
 		enemy.getBlackboard().set("maxForce", 300.f);
 		enemy.getBlackboard().set("maxVelocity", 150.f);
-		enemy.getBlackboard().set("velocity", new Vector2({ 0,0 }), true);
-		enemy.getBlackboard().set("wanderData", new WanderData({ 100, 75, 25, 0, 0 }), true);
+		enemy.getBlackboard().set("velocity", new glm::vec3(0), true);
+		enemy.getBlackboard().set("wanderData", new ai::WanderData({ 100.0f, 75.0f, 25.0f, glm::vec3(0), glm::vec3(1,1,0) }), true);
 	}
 	
 	// set up my obstacles
-	for (int i = 0; i < 10; ++i) {
+/*	for (int i = 0; i < 10; ++i) {
 
 		Obstacle c;
 		c.type = Obstacle::SPHERE;
@@ -84,7 +84,7 @@ bool BehaviourTreesApp::startup() {
 		m_obstacles.push_back(c);
 
 		obstacleForce->addSphereObstacle(c.x, c.y, c.r);
-	}
+	}*/
 	return true;
 }
 
@@ -94,18 +94,18 @@ void BehaviourTreesApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void BehaviourTreesApp::update(float deltaTime) {
+void BehaviourTreesApp::update() {
 
-	m_player.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
 
 	for (auto& enemy : m_enemy)
-		enemy.executeBehaviours(deltaTime);
+		enemy.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 
@@ -118,44 +118,42 @@ void BehaviourTreesApp::draw() {
 	m_2dRenderer->begin();
 
 	// draw obstacles as pink circles
-	m_2dRenderer->setRenderColour(1, 0, 1);
+	/*m_2dRenderer->setRenderColour(1, 0, 1);
 	for (auto circle : m_obstacles) {
 		m_2dRenderer->drawCircle(circle.x, circle.y, circle.r);
-	}
-
-	float x = 0, y = 0;
-
+	}*/
+	
 	// draw player as a green circle
-	m_player.getPosition(&x, &y);
+	auto position = m_player.getPosition();
 	m_2dRenderer->setRenderColour(0, 1, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
-	screenWrap(x, y);
-	m_player.setPosition(x, y);
+	screenWrap(position);
+	m_player.setPosition(position);
 
 	// draw enemy as a red circle
 	m_2dRenderer->setRenderColour(1, 0, 0);
 	for (auto& enemy : m_enemy) {
 
-		enemy.getPosition(&x, &y);
-		screenWrap(x, y);
+		position = enemy.getPosition();
+		screenWrap(position);
 
-		m_2dRenderer->drawCircle(x, y, 10);
-		enemy.setPosition(x, y);
+		m_2dRenderer->drawCircle(position.x, position.y, 10);
+		enemy.setPosition(position);
 	}
 
 	// draw attack radius
 	m_2dRenderer->setRenderColour(1, 1, 0, 0.2f);
 	for (auto& enemy : m_enemy) {
-		enemy.getPosition(&x, &y);
-		m_2dRenderer->drawCircle(x, y, 50);
+		position = enemy.getPosition();
+		m_2dRenderer->drawCircle(position.x, position.y, 50);
 	}
 
 	// draw seek radius
 	m_2dRenderer->setRenderColour(0, 1, 0, 0.2f);
 	for (auto& enemy : m_enemy) {
-		enemy.getPosition(&x, &y);
-		m_2dRenderer->drawCircle(x, y, 200);
+		position = enemy.getPosition();
+		m_2dRenderer->drawCircle(position.x, position.y, 200);
 	}
 
 	// output some text
@@ -163,14 +161,4 @@ void BehaviourTreesApp::draw() {
 
 	// done drawing sprites
 	m_2dRenderer->end();
-}
-
-void BehaviourTreesApp::screenWrap(float& x, float& y) {
-	// wrap position around the screen
-	x = fmod(x, (float)getWindowWidth());
-	if (x < 0)
-		x += getWindowWidth();
-	y = fmod(y, (float)getWindowHeight());
-	if (y < 0)
-		y += getWindowHeight();
 }

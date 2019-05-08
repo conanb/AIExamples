@@ -5,7 +5,7 @@
 
 #include "GameTreeBase.h"
 
-class GameTreesApp : public Application {
+class GameTreesApp : public app::Application {
 public:
 
 	GameTreesApp();
@@ -14,13 +14,13 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
 	enum {
 		// game type
@@ -33,7 +33,7 @@ protected:
 		MONTECARLO,
 	};
 
-	int					m_gameType = CONNECTFOUR;
+	int					m_gameType = TICTACTOE;
 	int					m_aiType = MONTECARLO;
 
 	GameTree::Game*		m_game;

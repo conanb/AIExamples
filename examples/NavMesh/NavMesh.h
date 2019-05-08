@@ -34,7 +34,7 @@ public:
 	// treat them as NavMesh::Node's and smooth the path using a
 	// funneling algorithm from (http://digestingduck.blogspot.com.au/2010/03/simple-stupid-funnel-algorithm.html)
 	// we must build a list of portals first
-	static int smoothPath(const std::list<Pathfinding::Node*>& path, std::list<Vector2>& smoothPath);
+	static int smoothPath(const std::list<graph::Node*>& path, std::list<glm::vec3>& smoothPath);
 
 	// access nodes
 	class Node;
@@ -52,19 +52,19 @@ public:
 public:
 
 	// the nav mesh node
-	class Node : public Pathfinding::Node {
+	class Node : public graph::Node {
 	public:
 
 		Node() {}
 		virtual ~Node() {}
 
-		Vector2 position;
+		glm::vec3 position;
 
 		// edges
-		std::vector<Vector2> vertices;
+		std::vector<glm::vec3> vertices;
 
 		// finds any vertices that are shared with the other node
-		int getAdjacentVertices(NavMesh::Node* other, Vector2* adjacent) {
+		int getAdjacentVertices(NavMesh::Node* other, glm::vec3* adjacent) {
 			int count = 0;
 			for (auto v : vertices) {
 				for (auto v2 : other->vertices) {
@@ -79,7 +79,7 @@ public:
 		}
 
 		// simple distance squared
-		static float heuristic(Pathfinding::Node* a, Pathfinding::Node* b) {
+		static float heuristic(graph::Node* a, graph::Node* b) {
 			NavMesh::Node* s = (NavMesh::Node*)a;
 			NavMesh::Node* e = (NavMesh::Node*)b;
 			float x = e->position.x - s->position.x;
@@ -90,23 +90,23 @@ public:
 
 	// a behaviour that follows a path, then randomly picks
 	// a new target node when it reaches the end of the path
-	class FollowPathBehaviour : public Behaviour {
+	class FollowPathBehaviour : public ai::Behaviour {
 	public:
 
 		FollowPathBehaviour() {}
 		virtual ~FollowPathBehaviour() {}
 
-		virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+		virtual ai::eBehaviourResult execute(Entity* entity);
 	};
 
 	// a behaviour that finds a new path and smooths it
-	class NewPathBehaviour : public Behaviour {
+	class NewPathBehaviour : public ai::Behaviour {
 	public:
 
 		NewPathBehaviour(NavMesh* navMesh) : m_navMesh(navMesh) {}
 		virtual ~NewPathBehaviour() {}
 
-		virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+		virtual ai::eBehaviourResult execute(Entity* entity);
 
 	protected:
 

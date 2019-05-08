@@ -59,7 +59,7 @@ public:
 	int start, end;
 };
 
-class PlannersApp : public Application {
+class PlannersApp : public app::Application {
 public:
 
 	PlannersApp();
@@ -68,13 +68,13 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
 	unsigned int m_currentStateID;
 

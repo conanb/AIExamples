@@ -6,7 +6,7 @@
 #include "NavMesh.h"
 #include "Entity.h"
 
-class NavMeshApp : public :Application {
+class NavMeshApp : public app::Application {
 public:
 
 	NavMeshApp();
@@ -15,18 +15,18 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*			m_font;
 
 	NavMesh* m_navMesh;
 
-	Entity m_player;
+	ai::Entity m_player;
 
-	std::list<Pathfinding::Node*> m_path;
-	std::list<Vector2> m_smoothPath;
+	std::list<graph::Node*> m_path;
+	std::list<glm::vec3> m_smoothPath;
 };

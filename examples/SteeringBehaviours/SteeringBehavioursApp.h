@@ -21,8 +21,6 @@ public:
 
 protected:
 
-	void screenWrap(float& x, float& y);
-
 	Renderer2D*	m_2dRenderer;
 	Font*		m_font;
 

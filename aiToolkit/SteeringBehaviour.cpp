@@ -168,7 +168,7 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 
 	// apply the jitter to our current wander target
 	// generate a random circular direction with a radius of "jitter"
-	wander += glm::sphericalRand(wd->jitter) * wd->axisWeights;
+	wander += glm::normalize(glm::sphericalRand(1.0f) * wd->axisWeights) * wd->jitter;
 
 	// bring it back to a radius around the game object
 	wander = glm::normalize(wander) * wd->radius;
@@ -180,12 +180,9 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
 
-	// normalise and protect from divide-by-zero
-	if (glm::dot(*velocity, *velocity) > 0)
-		*velocity = glm::normalize(*velocity);
-	
 	// combine velocity direction with wander target to offset
-	wander += *velocity * wd->offset;
+	if (glm::dot(*velocity, *velocity) > 0)	
+		wander += glm::normalize(*velocity) * wd->offset;
 
 	// normalise the new direction
 	if (glm::dot(wander, wander) > 0)
@@ -447,7 +444,7 @@ glm::vec3 FlowForce::getForce(Entity* entity) const {
 
 	// off-grid?
 	if (cell < glm::ivec3(0) ||
-		cell >= glm::ivec3(m_cellSize, m_cellSize, m_cellSize))
+		cell >= glm::ivec3(m_cols, m_rows, m_depth))
 		return {};
 
 	int index = cell.z * (m_cols * m_rows) + cell.y * m_cols + cell.x;

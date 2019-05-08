@@ -30,7 +30,7 @@ public:
 	virtual void reverseAction(int action);
 
 	// draw the game
-	virtual void draw(Renderer2D* renderer) const;
+	virtual void draw(app::Renderer2D* renderer) const;
 
 	// clones the current game state
 	virtual Game* clone() const;

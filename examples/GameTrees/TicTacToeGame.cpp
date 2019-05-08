@@ -42,7 +42,7 @@ void TicTacToeGame::reverseAction(int action) {
 	m_currentOpponent = (m_currentOpponent == GameTree::ePlayState::PLAYER_TWO) ? GameTree::ePlayState::PLAYER_ONE : GameTree::ePlayState::PLAYER_TWO;
 }
 
-void TicTacToeGame::draw(Renderer2D* renderer) const {
+void TicTacToeGame::draw(app::Renderer2D* renderer) const {
 
 	// draw game board
 	renderer->setRenderColour(1, 1, 1);

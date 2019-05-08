@@ -7,7 +7,7 @@
 #include "BehaviourTree.h"
 #include "SteeringBehaviour.h"
 
-class BehaviourTreesApp : public Application {
+class BehaviourTreesApp : public app::Application {
 public:
 
 	BehaviourTreesApp();
@@ -16,21 +16,19 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
+	
+	ai::Entity				m_player;
+	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	void screenWrap(float& x, float& y);
+	ai::Entity			m_enemy[5];
+	ai::Behaviour*		m_guardBehaviour;
 
-	Entity				m_player;
-	KeyboardBehaviour	m_keyboardBehaviour;
-
-	Entity			m_enemy[5];
-	Behaviour*		m_guardBehaviour;
-
-	std::vector<Obstacle>	m_obstacles;
+//	std::vector<Obstacle>	m_obstacles;
 };

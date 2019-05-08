@@ -14,14 +14,14 @@ FiniteStateMachineApp::~FiniteStateMachineApp() {
 
 bool FiniteStateMachineApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	// setup player
 	m_keyboardBehaviour.setSpeed(400);
 	m_player.addBehaviour(&m_keyboardBehaviour);
-	m_player.setPosition(getWindowWidth() * 0.5f, getWindowHeight() * 0.5f);
+	m_player.setPosition({ getWindowWidth() * 0.5f, getWindowHeight() * 0.5f,0 });
 
 	// guard
 	m_enemy.addBehaviour(&m_guardFSM);
@@ -38,14 +38,14 @@ bool FiniteStateMachineApp::startup() {
 	patrolState->addWaypoint(getWindowWidth() * 0.85f, getWindowHeight() * 0.15f);
 
 	// setup conditions that will trigger transitions
-	auto idleTimerCondition = new FloatGreaterCondition(idleState->getTimerPtr(), 2);
-	auto withinRangeCondition = new WithinRangeCondition(&m_player, 200);
-	auto outsideRangeCondition = new NotCondition(withinRangeCondition);
+	auto idleTimerCondition = new ai::FloatGreaterCondition(idleState->getTimerPtr(), 2);
+	auto withinRangeCondition = new ai::WithinRangeCondition(&m_player, 200);
+	auto outsideRangeCondition = new ai::NotCondition(withinRangeCondition);
 
 	// add transitions
-	auto attackToIdleTransition = new Transition(idleState, outsideRangeCondition);
-	auto toAttackTransition = new Transition(attackState, withinRangeCondition);
-	auto idleToPatrol = new Transition(patrolState, idleTimerCondition);
+	auto attackToIdleTransition = new ai::Transition(idleState, outsideRangeCondition);
+	auto toAttackTransition = new ai::Transition(attackState, withinRangeCondition);
+	auto idleToPatrol = new ai::Transition(patrolState, idleTimerCondition);
 
 	// attack to idle
 	attackState->addTransition(attackToIdleTransition);
@@ -82,16 +82,16 @@ void FiniteStateMachineApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void FiniteStateMachineApp::update(float deltaTime) {
+void FiniteStateMachineApp::update() {
 
-	m_player.executeBehaviours(deltaTime);
-	m_enemy.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
+	m_enemy.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 
@@ -103,21 +103,19 @@ void FiniteStateMachineApp::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
-	float x = 0, y = 0;
-
 	// draw player as a green circle
-	m_player.getPosition(&x, &y);
+	auto position = m_player.getPosition();
 	m_2dRenderer->setRenderColour(0, 1, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 	// draw enemy as a red circle
-	m_enemy.getPosition(&x, &y);
+	position = m_enemy.getPosition();
 	m_2dRenderer->setRenderColour(1, 0, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 	// draw enemy range
 	m_2dRenderer->setRenderColour(1, 1, 0, 0.25f);
-	m_2dRenderer->drawCircle(x, y, 200);
+	m_2dRenderer->drawCircle(position.x, position.y, 200);
 
 	// output some text
 	m_2dRenderer->setRenderColour(1, 1, 1);

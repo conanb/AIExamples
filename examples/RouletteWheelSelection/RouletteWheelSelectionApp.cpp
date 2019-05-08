@@ -1,7 +1,7 @@
 #include "RouletteWheelSelectionApp.h"
 #include "Font.h"
 #include "Input.h"
-
+#include "Timing.h"
 #include <glm/ext.hpp>
 
 std::string RouletteWheelSelectionApp::RouletteChance::lastSelected = "None";
@@ -19,9 +19,9 @@ void RouletteWheelSelectionApp::RouletteChance::action() {
 
 bool RouletteWheelSelectionApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	m_needs.push_back({ 0.0f, 1.0f, 0xff0000ff, "Hungry" });
 	m_needs.push_back({ 0.0f, 1.5f, 0xff00ffff, "Thirsty" });
@@ -40,17 +40,17 @@ void RouletteWheelSelectionApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void RouletteWheelSelectionApp::update(float deltaTime) {
+void RouletteWheelSelectionApp::update() {
 
 	// increase all needs based on modifiers over time
 	for (auto& need : m_needs) {
-		need.value += deltaTime * need.modifier;
-		m_total += deltaTime * need.modifier;
+		need.value += app::Time::deltaTime() * need.modifier;
+		m_total += app::Time::deltaTime() * need.modifier;
 	}
 
 	// HACK: select a need every 3 seconds
 	static float selectionTimer = 0;
-	selectionTimer += deltaTime;
+	selectionTimer += app::Time::deltaTime();
 	if (selectionTimer >= 3.0f) {
 
 		selectionTimer -= 3.0f;
@@ -71,10 +71,10 @@ void RouletteWheelSelectionApp::update(float deltaTime) {
 	}
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 

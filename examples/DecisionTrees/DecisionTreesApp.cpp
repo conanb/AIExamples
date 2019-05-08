@@ -29,7 +29,7 @@ bool DecisionTreesApp::startup() {
 	m_enemy.getBlackboard().set("maxForce", 300.f);
 	m_enemy.getBlackboard().set("maxVelocity", 150.f);
 	m_enemy.getBlackboard().set("velocity", new glm::vec3(0), true);
-	m_enemy.getBlackboard().set("wanderData", new ai::WanderData({ 100, 75, 25, glm::vec3(0), {1,1,0} }), true);
+	m_enemy.getBlackboard().set("wanderData", new ai::WanderData({ 200.0f, 75.0f, 25.0f, glm::vec3(0), glm::vec3(1,1,0) }), true);
 
 	// obstacle avoidance force used by decisions
 //	auto obstacleForce = new ai::ObstacleAvoidanceForce();

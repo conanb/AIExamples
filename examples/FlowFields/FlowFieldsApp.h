@@ -7,7 +7,7 @@
 #include "SteeringBehaviour.h"
 #include "Texture.h"
 
-class FlowFieldsApp : public Application {
+class FlowFieldsApp : public app::Application {
 public:
 
 	FlowFieldsApp();
@@ -16,20 +16,20 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
-	Texture*		m_map;
+	app::Texture*		m_map;
 
-	Entity			m_entitys[100];
+	ai::Entity			m_entitys[100];
 
-	SteeringBehaviour	m_steeringBehaviour;
-	FlowForce			m_flowForce;
+	ai::SteeringBehaviour	m_steeringBehaviour;
+	ai::FlowForce			m_flowForce;
 	
 	enum eFlowFieldCosts : unsigned short {
 		WALKABLE = 1,
@@ -49,7 +49,7 @@ protected:
 	float			m_integrationField[FLOWFIELD_ROWS][FLOWFIELD_COLS];
 
 	// the vector flow field that travels towards the goal cell
-	Vector2			m_flowField[FLOWFIELD_ROWS][FLOWFIELD_COLS];
+	glm::vec3			m_flowField[FLOWFIELD_ROWS][FLOWFIELD_COLS][1];
 
 	// percentage of grid taken up by obstacles
 	float m_obstaclePercentage = 0.15f;

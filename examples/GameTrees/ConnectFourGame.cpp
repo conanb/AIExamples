@@ -73,7 +73,7 @@ GameTree::ePlayState ConnectFourGame::getPieceAt(int r, int c) const {
 	return GameTree::ePlayState::UNKNOWN;
 }
 
-void ConnectFourGame::draw(Renderer2D* renderer) const {
+void ConnectFourGame::draw(app::Renderer2D* renderer) const {
 
 	// draw game board
 	renderer->setRenderColour(1, 1, 1);

@@ -4,7 +4,7 @@
 
 namespace Planner {
 
-	class State : public Pathfinding::Node {
+	class State : public graph::Node {
 	public:
 		State() : id(0) {}
 		virtual ~State() {}
@@ -21,7 +21,7 @@ namespace Planner {
 		virtual State* execute(State* state) const = 0;
 	};
 
-	class ActionLink : public Pathfinding::Edge {
+	class ActionLink : public graph::Edge {
 	public:
 
 		ActionLink(State* t, Action* a) : Edge(t, 1), action(a) {}

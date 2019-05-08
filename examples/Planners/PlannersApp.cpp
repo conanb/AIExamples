@@ -1,7 +1,7 @@
 #include "PlannersApp.h"
 #include "Font.h"
 #include "Input.h"
-
+#include "Timing.h"
 #include <bitset>
 
 PlannersApp::PlannersApp() {
@@ -14,9 +14,9 @@ PlannersApp::~PlannersApp() {
 
 bool PlannersApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	// starting state
 	auto startState = new DWRState();
@@ -98,8 +98,8 @@ bool PlannersApp::startup() {
 	goalState->stack[2].push_back(eContainer::RED);
 	goalState->hash();
 
-	std::list<Pathfinding::Node*> path;
-	Pathfinding::Search::dijkstra(
+	std::list<graph::Node*> path;
+	graph::Search::dijkstra(
 		m_states[m_currentStateID], 
 		m_states[goalState->id],
 		path);
@@ -133,18 +133,18 @@ void PlannersApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void PlannersApp::update(float deltaTime) {
+void PlannersApp::update() {
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
 	// every second it performs an action
 	static float timer = 0;
-	timer += deltaTime;
+	timer += app::Time::deltaTime();
 	if (timer >= 1) {
 		timer -= 1;
 

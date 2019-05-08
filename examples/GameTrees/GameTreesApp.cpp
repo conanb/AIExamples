@@ -17,9 +17,9 @@ GameTreesApp::~GameTreesApp() {
 
 bool GameTreesApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
 	switch (m_gameType) {
 	case TICTACTOE:		m_game = new TicTacToeGame();	break;
@@ -43,13 +43,13 @@ void GameTreesApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void GameTreesApp::update(float deltaTime) {
+void GameTreesApp::update() {
 	
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
 	// keep track of if the mouse has been clicked

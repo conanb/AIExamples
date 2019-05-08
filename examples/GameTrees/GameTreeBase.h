@@ -3,7 +3,7 @@
 #include <vector>
 #include <stdlib.h>
 
-namespace aie {
+namespace app {
 	class Renderer2D;
 }
 
@@ -44,7 +44,7 @@ public:
 	virtual void	reverseAction(int action) = 0;
 
 	// draw the game
-	virtual void	draw(aie::Renderer2D* renderer) const = 0;
+	virtual void	draw(app::Renderer2D* renderer) const = 0;
 
 	// clones the current game state
 	virtual Game*	clone() const = 0;

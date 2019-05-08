@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-class RouletteWheelSelectionApp : public Application {
+class RouletteWheelSelectionApp : public app::Application {
 public:
 
 	RouletteWheelSelectionApp();
@@ -15,13 +15,13 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
 	struct RouletteChance {
 		float value;

@@ -12,6 +12,7 @@ namespace app {
 	class Time {
 
 		typedef std::chrono::high_resolution_clock Clock;
+		typedef std::chrono::duration<float> fsec;
 
 	public:
 
@@ -19,11 +20,18 @@ namespace app {
 			assert(m_singleton == nullptr);
 			m_singleton = new Time();
 		}
+
 		static void tick() {
 			auto now = Clock::now();
 
-			m_singleton->m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_singleton->m_lastTick).count() / 1000.f;
-			m_singleton->m_now = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_singleton->m_epoch).count() / 1000.f;
+			fsec dt = now - m_singleton->m_lastTick;
+
+			m_singleton->m_deltaTime = dt.count();
+
+			dt = now - m_singleton->m_epoch;
+
+			m_singleton->m_now = dt.count();
+
 			m_singleton->m_lastTick = now;
 			m_singleton->m_frameCount++;
 		}

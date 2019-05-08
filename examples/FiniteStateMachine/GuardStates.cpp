@@ -1,62 +1,46 @@
 #include "GuardStates.h"
+#include "Timing.h"
 
-void AttackState::update(Entity* entity, float deltaTime) {
+void AttackState::update(ai::Entity* entity) {
 
 	if (m_target == nullptr)
 		return;
 
 	// get target position
-	float tx = 0, ty = 0;
-	m_target->getPosition(&tx, &ty);
+	auto target = m_target->getPosition();
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	float xDiff = tx - x;
-	float yDiff = ty - y;
-	float distance = sqrtf(xDiff * xDiff + yDiff * yDiff);
+	auto diff = target - position;
 
 	// if not at the target then move towards them
-	if (distance > 0) {
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
-
+	if (glm::dot(diff,diff) > 0) {
+		
 		// move to target (can overshoot!)
-		entity->translate(xDiff * m_speed * deltaTime, yDiff * m_speed * deltaTime);
+		entity->translate(glm::normalize(diff) * m_speed * app::Time::deltaTime());
 	}
 }
 
-void PatrolState::update(Entity* entity, float deltaTime) {
+void PatrolState::update(ai::Entity* entity) {
 
 	if (m_locations.empty())
 		return;
 
-	Location loc = m_locations[m_currentTarget];
+	auto target = m_locations[m_currentTarget];
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	float xDiff = loc.x - x;
-	float yDiff = loc.y - y;
-	float distance = sqrtf(xDiff * xDiff + yDiff * yDiff);
+	auto diff = glm::vec3(target,0) - position;
 
 	// if not at the target then move towards them
-	if (distance > 10) {
-
-		// need to make the difference the length of 1
-		// this is so movement can be "pixels per second"
-		xDiff /= distance;
-		yDiff /= distance;
+	if (glm::dot(diff, diff) > 10) {
 
 		// move to target (can overshoot!)
-		entity->translate(xDiff * m_speed * deltaTime, yDiff * m_speed * deltaTime);
+		entity->translate(glm::normalize(diff) * m_speed * app::Time::deltaTime());
 	}
 	else {
 		// go to next target!

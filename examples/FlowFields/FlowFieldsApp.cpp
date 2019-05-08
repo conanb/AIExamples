@@ -35,18 +35,18 @@ FlowFieldsApp::~FlowFieldsApp() {
 
 bool FlowFieldsApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("./font/consolas.ttf", 32);
 
-	m_map = new Texture("./map/flowfield.png");
+	m_map = new app::Texture("./map/flowfield.png");
 
 	// generate random field
 	// (could instead generate from an image)
 	randomiseLevel(m_obstaclePercentage);
 
-	m_flowForce.setField(&(m_flowField[0][0]),
-						 FLOWFIELD_ROWS, FLOWFIELD_COLS,
+	m_flowForce.setField(&(m_flowField[0][0][0]),
+						 FLOWFIELD_ROWS, FLOWFIELD_COLS, 1,
 						 FLOWFIELD_CELLSIZE);
 
 	m_steeringBehaviour.addForce(&m_flowForce);
@@ -55,7 +55,7 @@ bool FlowFieldsApp::startup() {
 
 		go.addBehaviour(&m_steeringBehaviour);
 
-		go.getBlackboard().set("velocity", new Vector2({ 0,0 }), true);
+		go.getBlackboard().set("velocity", new glm::vec3(0), true);
 		go.getBlackboard().set("maxForce", 200.f);
 		go.getBlackboard().set("maxVelocity", 50.f);
 	}
@@ -69,32 +69,38 @@ void FlowFieldsApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void FlowFieldsApp::update(float deltaTime) {
+void FlowFieldsApp::update() {
 
 	for (auto& go : m_entitys)
-		go.executeBehaviours(deltaTime);
+		go.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
 	// visualisation toggles
-	if (input->wasKeyPressed(INPUT_KEY_G))
+	if (input->wasKeyPressed(app::INPUT_KEY_G))
 		m_drawGradient = !m_drawGradient;
-	if (input->wasKeyPressed(INPUT_KEY_F))
+	if (input->wasKeyPressed(app::INPUT_KEY_F))
 		m_drawFlow = !m_drawFlow;
-	if (input->wasKeyPressed(INPUT_KEY_C))
+	if (input->wasKeyPressed(app::INPUT_KEY_C))
 		m_drawHSL = !m_drawHSL;
 
 	// randomise level
-	if (input->wasKeyPressed(INPUT_KEY_R))
+	glm::vec3* velocity = nullptr;
+	if (input->wasKeyPressed(app::INPUT_KEY_R)) {
 		randomiseLevel(m_obstaclePercentage);
+		for (auto& go : m_entitys) {
+			go.getBlackboard().get("velocity", &velocity);
+			*velocity = glm::vec3(0);
+		}
+	}
 
 	// pick goal cell
-	if (input->isMouseButtonDown(INPUT_MOUSE_BUTTON_LEFT)) {
+	if (input->isMouseButtonDown(app::INPUT_MOUSE_BUTTON_LEFT)) {
 
 		// find cell under mouse
 		int x = 0, y = 0;
@@ -125,10 +131,14 @@ void FlowFieldsApp::draw() {
 	for (int r = 0; r < FLOWFIELD_ROWS; ++r) {
 		for (int c = 0; c < FLOWFIELD_COLS; ++c) {
 			if (m_costField[r][c] == eFlowFieldCosts::IMPASSABLE) {
-				m_2dRenderer->setRenderColour(1, 0, 0);
+				m_2dRenderer->setRenderColour(1, 1, 1);
 				m_2dRenderer->drawBox(FLOWFIELD_CELLSIZE * 0.5f + c * FLOWFIELD_CELLSIZE,
 									  FLOWFIELD_CELLSIZE * 0.5f + r * FLOWFIELD_CELLSIZE,
 									  FLOWFIELD_CELLSIZE, FLOWFIELD_CELLSIZE);
+				m_2dRenderer->setRenderColour(1,0,0);
+				m_2dRenderer->drawBox(FLOWFIELD_CELLSIZE * 0.5f + c * FLOWFIELD_CELLSIZE,
+					FLOWFIELD_CELLSIZE * 0.5f + r * FLOWFIELD_CELLSIZE,
+					FLOWFIELD_CELLSIZE * .75f, FLOWFIELD_CELLSIZE * .75f);
 			}
 			else {
 
@@ -155,8 +165,8 @@ void FlowFieldsApp::draw() {
 					m_2dRenderer->setRenderColour(1, 1, 0);
 					m_2dRenderer->drawLine(FLOWFIELD_CELLSIZE * 0.5f + c * FLOWFIELD_CELLSIZE,
 										   FLOWFIELD_CELLSIZE * 0.5f + r * FLOWFIELD_CELLSIZE,
-										   FLOWFIELD_CELLSIZE * 0.5f + c * FLOWFIELD_CELLSIZE + m_flowField[r][c].x * 16,
-										   FLOWFIELD_CELLSIZE * 0.5f + r * FLOWFIELD_CELLSIZE + m_flowField[r][c].y * 16);
+										   FLOWFIELD_CELLSIZE * 0.5f + c * FLOWFIELD_CELLSIZE + m_flowField[r][c][0].x * 16,
+										   FLOWFIELD_CELLSIZE * 0.5f + r * FLOWFIELD_CELLSIZE + m_flowField[r][c][0].y * 16);
 				}
 			}
 		}
@@ -164,10 +174,9 @@ void FlowFieldsApp::draw() {
 
 	// draw game objects
 	m_2dRenderer->setRenderColour(1, 1, 1);
-	float x, y;
 	for (auto& go : m_entitys) {
-		go.getPosition(&x, &y);
-		m_2dRenderer->drawBox(x, y, 8, 8);
+		auto position = go.getPosition();
+		m_2dRenderer->drawBox(position.x, position.y, 8, 8);
 	}
 
 	m_2dRenderer->setRenderColour(1, 1, 0);
@@ -192,8 +201,9 @@ void FlowFieldsApp::randomiseLevel(float obstaclePercentage) {
 				m_costField[r][c] = eFlowFieldCosts::WALKABLE;
 
 			m_integrationField[r][c] = 0;
-			m_flowField[r][c].x = 0;
-			m_flowField[r][c].y = 0;
+			m_flowField[r][c][0].x = 0;
+			m_flowField[r][c][0].y = 0;
+			m_flowField[r][c][0].z = 0;
 		}
 	}
 
@@ -204,8 +214,8 @@ void FlowFieldsApp::randomiseLevel(float obstaclePercentage) {
 			index = rand() % (FLOWFIELD_ROWS * FLOWFIELD_COLS);
 		} while (m_costField[index / FLOWFIELD_COLS][index % FLOWFIELD_COLS] == eFlowFieldCosts::IMPASSABLE);
 
-		go.setPosition(FLOWFIELD_CELLSIZE * 0.5f + (index % FLOWFIELD_COLS) * FLOWFIELD_CELLSIZE,
-					   FLOWFIELD_CELLSIZE * 0.5f + (index / FLOWFIELD_COLS) * FLOWFIELD_CELLSIZE);
+		go.setPosition({ FLOWFIELD_CELLSIZE * 0.5f + (index % FLOWFIELD_COLS) * FLOWFIELD_CELLSIZE,
+					   FLOWFIELD_CELLSIZE * 0.5f + (index / FLOWFIELD_COLS) * FLOWFIELD_CELLSIZE, 0.0f });
 	}
 }
 
@@ -367,8 +377,9 @@ void FlowFieldsApp::generateFlowfield() {
 	for (int r = 0; r < FLOWFIELD_ROWS; ++r) {
 		for (int c = 0; c < FLOWFIELD_COLS; ++c) {
 
-			m_flowField[r][c].x = 0;
-			m_flowField[r][c].y = 0;
+			m_flowField[r][c][0].x = 0;
+			m_flowField[r][c][0].y = 0;
+			m_flowField[r][c][0].z = 0;
 
 			lowestCost = FLT_MAX;
 
@@ -396,8 +407,9 @@ void FlowFieldsApp::generateFlowfield() {
 				if (mag > 0) {
 					mag = sqrt(mag);
 
-					m_flowField[r][c].x = (x - c) / mag;
-					m_flowField[r][c].y = (y - r) / mag;
+					m_flowField[r][c][0].x = (x - c) / mag;
+					m_flowField[r][c][0].y = (y - r) / mag;
+					m_flowField[r][c][0].z = 0;
 				}
 			}
 		}
