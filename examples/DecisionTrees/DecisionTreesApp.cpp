@@ -14,7 +14,7 @@ bool DecisionTreesApp::startup() {
 	
 	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new app::Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 
 	// setup player
 	m_keyboardBehaviour.setSpeed(400);

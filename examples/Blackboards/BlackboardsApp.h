@@ -18,13 +18,13 @@ enum eBlackboardQuestionType : int {
 };
 
 // condition that checks blackboard
-class BlackboardBoolCondition : public Condition {
+class BlackboardBoolCondition : public ai::Condition {
 public:
 
 	BlackboardBoolCondition(const char* entry) : m_entry(entry) {}
 	virtual ~BlackboardBoolCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(ai::Entity* entity) const {
 		bool value = false;
 		entity->getBlackboard().get(m_entry, value);
 		return value;
@@ -36,13 +36,13 @@ protected:
 };
 
 // condition that checks blackboard
-class BlackboardHasEntryCondition : public Condition {
+class BlackboardHasEntryCondition : public ai::Condition {
 public:
 
 	BlackboardHasEntryCondition(const char* entry) : m_entry(entry) {}
 	virtual ~BlackboardHasEntryCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(ai::Entity* entity) const {
 		return entity->getBlackboard().contains(m_entry);
 	}
 
@@ -53,61 +53,61 @@ protected:
 
 // a question that gets posted to the blackboard requesting help
 // this could be done better
-class NeedHelpQuestion : public BlackboardQuestion {
+class NeedHelpQuestion : public ai::BlackboardQuestion {
 public:
 	NeedHelpQuestion(int type) : BlackboardQuestion(type) {}
 	virtual ~NeedHelpQuestion() {}
 
-	Entity* needsHelp;
+	ai::Entity* needsHelp;
 };
 
 // a game object that is also a blackboard expert
-class Myentity : public Entity, public BlackboardExpert {
+class MyEntity : public ai::Entity, public ai::BlackboardExpert {
 public:
 
-	Myentity() {}
-	virtual ~Myentity() {}
+	MyEntity() {}
+	virtual ~MyEntity() {}
 
 	// blackboard methods
-	virtual float	evaluateResponse(BlackboardQuestion* question, Blackboard* blackboard);
-	virtual void	execute(BlackboardQuestion* question, Blackboard* blackboard);
+	virtual float	evaluateResponse(ai::BlackboardQuestion* question, ai::Blackboard* blackboard);
+	virtual void	execute(ai::BlackboardQuestion* question, ai::Blackboard* blackboard);
 };
 
 // state does nothing
-class IdleState : public State {
+class IdleState : public ai::State {
 public:
 
 	IdleState() {}
 	virtual ~IdleState() {}
-	virtual void	update(Entity* entity, float deltaTime) {}
+	virtual void	update(ai::Entity* entity) {}
 };
 
 // game object moves towards its target
 // when it gets there it marks blackboards as success
-class HelpEntityState : public State {
+class HelpEntityState : public ai::State {
 public:
 
 	HelpEntityState() {}
 	virtual ~HelpEntityState() {}
-	virtual void	update(Entity* entity, float deltaTime);
+	virtual void	update(ai::Entity* entity);
 };
 
 // behaviour that responds to questions this entity can answer
-class BlackboardRespondBehaviour : public Behaviour {
+class BlackboardRespondBehaviour : public ai::Behaviour {
 public:
 
-	BlackboardRespondBehaviour(Blackboard* blackboard) : m_blackboard(blackboard) {}
+	BlackboardRespondBehaviour(ai::Blackboard* blackboard) : m_blackboard(blackboard) {}
 	virtual ~BlackboardRespondBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual ai::eBehaviourResult execute(ai::Entity* entity);
 
 protected:
 
-	Blackboard*	m_blackboard;
+	ai::Blackboard*	m_blackboard;
 };
 
 // demo application
-class BlackboardsApp : public Application {
+class BlackboardsApp : public app::Application {
 public:
 
 	BlackboardsApp();
@@ -116,21 +116,19 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
+	
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
-	void screenWrap(float& x, float& y);
-
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
-
-	Myentity		m_entities[30];
+	MyEntity		m_entities[30];
 
 	// shared state machine and wander force
-	FiniteStateMachine	m_fsm;
-	WanderForce			m_wander;
+	ai::FiniteStateMachine	m_fsm;
+	ai::WanderForce			m_wander;
 
 	// shared behaviour for responding to help requests
 	BlackboardRespondBehaviour	m_respondBehaviour;
@@ -145,5 +143,5 @@ protected:
 	NeedHelpQuestion	m_requireMedicQuestion;
 
 	// shared "level" blackboard for global state data
-	Blackboard			m_globalBlackboard;
+	ai::Blackboard			m_globalBlackboard;
 };

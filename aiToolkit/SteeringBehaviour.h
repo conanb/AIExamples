@@ -150,7 +150,7 @@ public:
 
 	virtual glm::vec3 getForce(Entity* entity) const;
 };
-/*
+
 // obstacles
 struct Obstacle {
 
@@ -160,11 +160,11 @@ struct Obstacle {
 	};
 
 	int type;
-	float x, y, z;
+	glm::vec3 center;
 	union {
-		float r;
+		float radius;
 		struct {
-			float w, h;
+			glm::vec3 extents;
 		};
 	};
 };
@@ -178,14 +178,15 @@ public:
 	void setFeelerLength(float length) { m_feelerLength = length; }
 
 	void addSphereObstacle(float x, float y, float z, float radius) {
-		Obstacle o = { Obstacle::SPHERE, x, y, z };
-		o.r = radius;
+		Obstacle o = { Obstacle::SPHERE, {x, y, z} };
+		o.radius = radius;
 		m_obstacles.push_back(o);
 	}
-	void addBoxObstacle(float x, float y, float z, float w, float h) {
-		Obstacle o = { Obstacle::BOX, x, y, z };
-		o.w = w;
-		o.h = h;
+	void addBoxObstacle(float x, float y, float z, float w, float h, float d = 0) {
+		Obstacle o = { Obstacle::BOX, {x, y, z} };
+		o.extents.x = w;
+		o.extents.y = h;
+		o.extents.z = d;
 		m_obstacles.push_back(o);
 	}
 
@@ -199,7 +200,7 @@ public:
 
 	std::vector<Obstacle> m_obstacles;
 };
-*/
+
 // FLOCKING FORCES
 
 class SeparationForce : public SteeringForce {

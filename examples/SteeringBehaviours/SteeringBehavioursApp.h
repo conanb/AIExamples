@@ -7,7 +7,7 @@
 #include "KeyboardBehaviour.h"
 #include "SteeringBehaviour.h"
 
-class SteeringBehavioursApp : public Application {
+class SteeringBehavioursApp : public app::Application {
 public:
 
 	SteeringBehavioursApp();
@@ -16,27 +16,27 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
 
-	Entity			m_player;
-	KeyboardBehaviour	m_keyboardBehaviour;
+	ai::Entity			m_player;
+	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	Entity			m_enemies[10];
-	FiniteStateMachine	m_fsm;
+	ai::Entity			m_enemies[10];
+	ai::FiniteStateMachine	m_fsm;
 
 	// keeping access so that I can toggle weights
-	SteeringState*		m_attackState;
+	ai::SteeringState*		m_attackState;
 
-	SeekForce				m_seek;
-	FleeForce				m_flee;
-	WanderForce				m_wander;
-	ObstacleAvoidanceForce	m_avoid;
+	ai::SeekForce				m_seek;
+	ai::FleeForce				m_flee;
+	ai::WanderForce				m_wander;
+	//ObstacleAvoidanceForce	m_avoid;
 
-	std::vector<Obstacle>	m_obstacles;
+	//std::vector<Obstacle>	m_obstacles;
 };

@@ -70,7 +70,7 @@ protected:
 
 	// visualisation stuff
 	float m_maxCost = 0;
-	bool m_drawFlow = true;
-	bool m_drawGradient = true;
+	bool m_drawFlow = false;
+	bool m_drawGradient = false;
 	bool m_drawHSL = false;
 };

@@ -194,18 +194,18 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 	return wander * maxForce;
 }
 
-/*glm::vec3 ObstacleAvoidanceForce::getForce(Entity* entity) const {
+glm::vec3 ObstacleAvoidanceForce::getForce(ai::Entity* entity) const {
 
 	glm::vec3 force(0);
 
 	// create feeler
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	glm::vec3* velocity = nullptr;
 	entity->getBlackboard().get("velocity", &velocity);
 
-	float ix, iy, t;
+	glm::vec3 i;
+	float t;
 
 	// are we moving?
 	float magSqr = velocity->x * velocity->x + velocity->y * velocity->y;
@@ -215,83 +215,74 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 		for (auto& obstacle : m_obstacles) {
 
 			if (obstacle.type == Obstacle::SPHERE) {
-				if (intersection::rayCircleIntersection(x, y,
-										  velocity->x, velocity->y,
-										  obstacle.x, obstacle.y, obstacle.r,
-										  ix, iy, &t)) {
+				if (intersection::rayCircleIntersection(position,
+										  *velocity,
+										  obstacle.center, obstacle.radius,
+										  i, &t)) {
 					// within range?
 					if (t >= 0 &&
-						t <= m_feelerLength) {
-						force.x += (ix - obstacle.x) / obstacle.r;
-						force.y += (iy - obstacle.y) / obstacle.r;
-					}
+						t <= m_feelerLength) 
+						force += (i - obstacle.center) / obstacle.radius;
 				}
 
 				// rotate feeler about 30 degrees
 				float s = sinf(3.14159f*0.15f);
 				float c = cosf(3.14159f*0.15f);
-				if (intersection::rayCircleIntersection(x, y,
-										  velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c, // apply rotation to vector
-										  obstacle.x, obstacle.y, obstacle.r,
-										  ix, iy, &t)) {
+				if (intersection::rayCircleIntersection(position,
+					{ velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c, 0 }, // apply rotation to vector
+										  obstacle.center, obstacle.radius,
+										  i, &t)) {
 					if (t >= 0 &&
-						t <= (m_feelerLength * 0.5f)) { // scale feeler 50%
-						force.x += (ix - obstacle.x) / obstacle.r;
-						force.y += (iy - obstacle.y) / obstacle.r;
-					}
+						t <= (m_feelerLength * 0.5f))  // scale feeler 50%
+						force += (i - obstacle.center) / obstacle.radius;
 				}
 
 				// rotate feeler about -30 degrees
 				s = sinf(3.14159f*-0.15f);
 				c = cosf(3.14159f*-0.15f);
-				if (intersection::rayCircleIntersection(x, y,
-										  velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c, // apply rotation to vector
-										  obstacle.x, obstacle.y, obstacle.r,
-										  ix, iy, &t)) {
+				if (intersection::rayCircleIntersection(position,
+					{ velocity->x * c - velocity->y * s, velocity->x * s + velocity->y * c,0 }, // apply rotation to vector
+										  obstacle.center, obstacle.radius,
+										  i, &t)) {
 					if (t >= 0 &&
-						t <= (m_feelerLength * 0.5f)) { // scale feeler 50%
-						force.x += (ix - obstacle.x) / obstacle.r;
-						force.y += (iy - obstacle.y) / obstacle.r;
-					}
+						t <= (m_feelerLength * 0.5f)) // scale feeler 50%
+						force += (i - obstacle.center) / obstacle.radius;
 				}
 			}
 			else if (obstacle.type == Obstacle::BOX) {
-				float nx = 0, ny = 0;
+				glm::vec3 n(0);
 
 				float mag = sqrt(magSqr);
 
-				if (intersection::rayBoxIntersection(x, y,
-									   velocity->x / mag * m_feelerLength, velocity->y / mag * m_feelerLength,
-									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
-									   nx, ny,
+				if (intersection::rayBoxIntersection(position,
+					{velocity->x / mag * m_feelerLength, velocity->y / mag * m_feelerLength,0},
+									   obstacle.center - obstacle.extents * 0.5f, obstacle.extents,
+									   n,
 									   &t)) {
-					force.x += nx;
-					force.y += ny;
+					force += n;
 				}
 
 				// rotate feeler about 30 degrees
 				float s = sinf(3.14159f*0.15f);
 				float c = cosf(3.14159f*0.15f);
-				if (intersection::rayBoxIntersection(x, y,
-									   (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
-									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,
-									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
-									   nx, ny,
+				if (intersection::rayBoxIntersection(position,
+					{ (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
+									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,0 },
+					obstacle.center - obstacle.extents * 0.5f, obstacle.extents,
+									   n,
 									   &t)) {
-					force.x += nx;
-					force.y += ny;
+					force += n;
 				}
 				// rotate feeler about 30 degrees
 				s = sinf(3.14159f*-0.15f);
 				c = cosf(3.14159f*-0.15f);
-				if (intersection::rayBoxIntersection(x, y,
-									   (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
-									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,
-									   obstacle.x - obstacle.w * 0.5f, obstacle.y - obstacle.h * 0.5f, obstacle.w, obstacle.h,
-									   nx, ny,
+				if (intersection::rayBoxIntersection(position,
+					{ (velocity->x * c - velocity->y * s) / mag * m_feelerLength * 0.5f,
+									   (velocity->x * s + velocity->y * c) / mag * m_feelerLength * 0.5f,0 },
+					obstacle.center - obstacle.extents * 0.5f, obstacle.extents,
+									   n,
 									   &t)) {
-					force.x += nx;
-					force.y += ny;
+					force += n;
 				}
 			}
 		}
@@ -300,8 +291,8 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ force.x * maxForce, force.y * maxForce };
-}*/
+	return force * maxForce;
+}
 
 glm::vec3 SeparationForce::getForce(Entity* entity) const {
 	

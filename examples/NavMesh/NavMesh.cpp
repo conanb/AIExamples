@@ -1,6 +1,6 @@
 #include "NavMesh.h"
 #include "Entity.h"
-
+#include "Timing.h"
 #include "poly2tri/poly2tri.h"
 
 NavMesh::NavMesh(float width, float height) {
@@ -26,14 +26,15 @@ NavMesh::Node* NavMesh::getRandomNode() const {
 	return m_nodes[rand() % m_nodes.size()];
 }
 
-NavMesh::Node* NavMesh::findClosest(float x, float y) const {
+NavMesh::Node* NavMesh::findClosest(const glm::vec3& p) const {
 
 	NavMesh::Node* closest = nullptr;
-	float closestDist = 2000 * 2000;
+	float closestDist = FLT_MAX;
 
 	for (auto node : m_nodes) {
 
-		float dist = (node->position.x - x) * (node->position.x - x) + (node->position.y - y) * (node->position.y - y);
+		auto diff = node->position - p;
+		float dist = glm::dot(diff, diff);
 
 		if (dist < closestDist) {
 			closest = node;
@@ -77,9 +78,9 @@ void NavMesh::build() {
 
 		auto node = new NavMesh::Node();
 
-		node->vertices.push_back({ (float)tri->GetPoint(0)->x, (float)tri->GetPoint(0)->y });
-		node->vertices.push_back({ (float)tri->GetPoint(1)->x, (float)tri->GetPoint(1)->y });
-		node->vertices.push_back({ (float)tri->GetPoint(2)->x, (float)tri->GetPoint(2)->y });
+		node->vertices.push_back({ (float)tri->GetPoint(0)->x, (float)tri->GetPoint(0)->y, 0 });
+		node->vertices.push_back({ (float)tri->GetPoint(1)->x, (float)tri->GetPoint(1)->y, 0 });
+		node->vertices.push_back({ (float)tri->GetPoint(2)->x, (float)tri->GetPoint(2)->y, 0 });
 
 		node->position.x = (node->vertices[0].x + node->vertices[1].x + node->vertices[2].x) / 3;
 		node->position.y = (node->vertices[0].y + node->vertices[1].y + node->vertices[2].y) / 3;
@@ -93,7 +94,7 @@ void NavMesh::build() {
 
 			if (n == n2) continue;
 
-			Vector2 v[2];
+			glm::vec3 v[2];
 			if (n->getAdjacentVertices(n2, v) == 2) {
 
 				float mag = (n->position.x - n2->position.x) *
@@ -101,8 +102,8 @@ void NavMesh::build() {
 					(n->position.y - n2->position.y) *
 					(n->position.y - n2->position.y);
 
-				n->edges.push_back(new Pathfinding::Edge(n2, 1));
-				n2->edges.push_back(new Pathfinding::Edge(n, 1));
+				n->edges.push_back(new graph::Edge(n2, 1));
+				n2->edges.push_back(new graph::Edge(n, 1));
 			}
 		}
 	}
@@ -118,86 +119,77 @@ void NavMesh::build() {
 	m_cdt = nullptr;
 }
 
-eBehaviourResult NavMesh::FollowPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult NavMesh::FollowPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Vector2>* smoothPath = nullptr;
+	std::list<glm::vec3>* smoothPath = nullptr;
 	if (entity->getBlackboard().get("smoothpath", &smoothPath) == false ||
 		smoothPath->empty())
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
 	float speed = 0;
 	entity->getBlackboard().get("speed", speed);
 
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// access first node we're heading towards
-	Vector2 first = smoothPath->front();
+	glm::vec3 first = smoothPath->front();
 
 	// distance to first
-	float xDiff = first.x - x;
-	float yDiff = first.y - y;
-
-	float distance = xDiff * xDiff + yDiff * yDiff;
-
+	auto diff = first - position;
+	
 	// if not at the target then move towards it
-	if (distance > 25) {
-
-		distance = sqrt(distance);
-		xDiff /= distance;
-		yDiff /= distance;
-
+	if (glm::dot(diff, diff) > 25) {
+		
 		// move to target (can overshoot!)
-		entity->translate(xDiff * speed * deltaTime, yDiff * speed * deltaTime);
+		entity->translate(glm::normalize(diff) * speed * app::Time::deltaTime());
 	}
 	else {
 		// at the node, remove it and move to the next
 		smoothPath->pop_front();
 	}
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }
 
-eBehaviourResult NavMesh::NewPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult NavMesh::NewPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Pathfinding::Node*>* path = nullptr;
+	std::list<graph::Node*>* path = nullptr;
 	if (entity->getBlackboard().get("path", &path) == false)
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
-	std::list<Vector2>* smoothPath = nullptr;
+	std::list<glm::vec3>* smoothPath = nullptr;
 	if (entity->getBlackboard().get("smoothpath", &smoothPath) == false)
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// random end node
 	bool found = false;
 	do {
 
-		auto first = m_navMesh->findClosest(x, y);
+		auto first = m_navMesh->findClosest(position);
 		auto end = first;
 		while (end == first)
 			end = m_navMesh->getRandomNode();
 
-		found = Pathfinding::Search::aStar(first, end, *path, NavMesh::Node::heuristic);
+		found = graph::Search::aStar(first, end, *path, NavMesh::Node::heuristic);
 
 	} while (found == false);
 
 	NavMesh::smoothPath(*path, *smoothPath);
 
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }
 
-int NavMesh::stringPull(const Vector2* portals, int portalCount,
-						Vector2* points, const int maxPoints) {
+int NavMesh::stringPull(const glm::vec3* portals, int portalCount,
+	glm::vec3* points, const int maxPoints) {
 
 	// Find straight path
 	int npts = 0;
 
 	// Init scan state
-	Vector2 portalApex, portalLeft, portalRight;
+	glm::vec3 portalApex, portalLeft, portalRight;
 	int apexIndex = 0, leftIndex = 0, rightIndex = 0;
 	portalApex = portals[0];
 	portalLeft = portals[0];
@@ -208,8 +200,8 @@ int NavMesh::stringPull(const Vector2* portals, int portalCount,
 	npts++;
 
 	for (int i = 1; i < portalCount && npts < maxPoints; ++i) {
-		Vector2 left = portals[i * 2 + 0];
-		Vector2 right = portals[i * 2 + 1];
+		glm::vec3 left = portals[i * 2 + 0];
+		glm::vec3 right = portals[i * 2 + 1];
 
 		// Update right vertex
 		if (triarea2(portalApex, portalRight, right) <= 0.0f) {
@@ -279,15 +271,15 @@ int NavMesh::stringPull(const Vector2* portals, int portalCount,
 	return npts;
 }
 
-int NavMesh::smoothPath(const std::list<Pathfinding::Node*>& path,
-						std::list<Vector2>& smoothPath) {
+int NavMesh::smoothPath(const std::list<graph::Node*>& path,
+						std::list<glm::vec3>& smoothPath) {
 
 	if (path.size() == 0)
 		return 0;
 
 	smoothPath.clear();
 
-	Vector2* portals = new Vector2[(path.size() + 1) * 2];
+	glm::vec3* portals = new glm::vec3[(path.size() + 1) * 2];
 
 	int index = 0;
 
@@ -303,14 +295,12 @@ int NavMesh::smoothPath(const std::list<Pathfinding::Node*>& path,
 		if (prev != nullptr) {
 
 			// 
-			Vector2 adj[2];
+			glm::vec3 adj[2];
 			prev->getAdjacentVertices(node, adj);
 
-			Vector2 fromPrev = { node->position.x - prev->position.x,
-								 node->position.y - prev->position.y };
+			glm::vec3 fromPrev = node->position - prev->position;
 
-			Vector2 toAdj0 = { adj[0].x - prev->position.x,
-				adj[0].y - prev->position.y };
+			glm::vec3 toAdj0 = adj[0] - prev->position;
 
 			if ((fromPrev.x * toAdj0.y - toAdj0.x * fromPrev.y) > 0) {
 				portals[index++] = adj[0];
@@ -330,7 +320,7 @@ int NavMesh::smoothPath(const std::list<Pathfinding::Node*>& path,
 	portals[index++] = ((NavMesh::Node*)path.back())->position;
 
 	// shorten path through portals
-	Vector2 out[100];
+	glm::vec3 out[100];
 	int count = stringPull(portals, index / 2, out, 100);
 
 	for (int i = 0; i < count; ++i)

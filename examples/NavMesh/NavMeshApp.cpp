@@ -14,9 +14,9 @@ NavMeshApp::~NavMeshApp() {
 
 bool NavMeshApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 
 	m_navMesh = new NavMesh(1280, 720);
 
@@ -42,14 +42,14 @@ bool NavMeshApp::startup() {
 	while (end == start)
 		end = m_navMesh->getRandomNode();
 
-	Pathfinding::Search::aStar(start, end, m_path, NavMesh::Node::heuristic);
+	graph::Search::aStar(start, end, m_path, NavMesh::Node::heuristic);
 
 	NavMesh::smoothPath(m_path, m_smoothPath);
 
 	m_player.getBlackboard().set("path", &m_path);
 	m_player.getBlackboard().set("smoothpath", &m_smoothPath);
 	m_player.getBlackboard().set("speed", 100.0f);
-	m_player.setPosition(start->position.x, start->position.y);
+	m_player.setPosition({ start->position.x, start->position.y, 0 });
 
 //	auto selector = new SelectorBehaviour();
 //	selector->addChild(new NavMesh::FollowPathBehaviour());
@@ -68,31 +68,30 @@ void NavMeshApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void NavMeshApp::update(float deltaTime) {
+void NavMeshApp::update() {
 	
-	m_player.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
-	if (input->wasMouseButtonPressed(INPUT_MOUSE_BUTTON_LEFT)) {
+	if (input->wasMouseButtonPressed(app::INPUT_MOUSE_BUTTON_LEFT)) {
 
 		int x = 0, y = 0;
 		input->getMouseXY(&x, &y);
 
-		auto end = m_navMesh->findClosest(x, y);
+		auto end = m_navMesh->findClosest({ x, y, 0 });
 
-		float px, py;
-		m_player.getPosition(&px, &py);
+		auto position = m_player.getPosition();
 
-		auto start = m_navMesh->findClosest(px, py);
+		auto start = m_navMesh->findClosest(position);
 
 		if (start != end) {
-			Pathfinding::Search::aStar(start, end, m_path, NavMesh::Node::heuristic);
+			graph::Search::aStar(start, end, m_path, NavMesh::Node::heuristic);
 
 			NavMesh::smoothPath(m_path, m_smoothPath);
 		}
@@ -107,11 +106,10 @@ void NavMeshApp::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
-	float x, y;
-	m_player.getPosition(&x, &y);
-	m_2dRenderer->drawCircle(x, y, 10);
+	auto position = m_player.getPosition();
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
-	std::list<Vector2> smooth;
+	std::list<glm::vec3> smooth;
 	NavMesh::smoothPath(m_path, smooth);
 
 	m_2dRenderer->setRenderColour(1, 1, 1);

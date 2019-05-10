@@ -1,7 +1,7 @@
 #include "PathfindingApp.h"
 #include "Font.h"
 #include "Input.h"
-
+#include "Timing.h"
 #include "BehaviourTree.h"
 
 PathfindingApp::PathfindingApp() {
@@ -14,15 +14,15 @@ PathfindingApp::~PathfindingApp() {
 
 bool PathfindingApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 
 	// if the image fails to load then the level is drawn black/white
-//	m_spriteSheet.load("./textures/magecity.png");
+	//m_spriteSheet.load("../../bin/textures/magecity.png");
 
 	// map is 1280x720 / 20x20
-	m_map.load("./map/map1.png");
+	m_map.load("../../bin/map/map1.png");
 
 	auto pixels = m_map.getPixels();
 	auto channels = m_map.getFormat();
@@ -67,7 +67,7 @@ bool PathfindingApp::startup() {
 			float sqrDist = x * x + y * y;
 
 			if (sqrDist <= (30*30)) {
-				Pathfinding::Edge* edge = new Pathfinding::Edge();
+				graph::Edge* edge = new graph::Edge();
 				edge->cost = sqrDist;
 				edge->target = b;
 
@@ -79,13 +79,13 @@ bool PathfindingApp::startup() {
 	// place random medkits
 	for (int i = 0; i < 5; ++i) {
 		MyNode* node = m_nodes[rand() % m_nodes.size()];
-		node->flags |= Pathfinding::Node::MEDKIT;
+		node->flags |= MEDKIT;
 	}
 
 	// perform search for starting path
 	auto start = m_nodes[rand() % m_nodes.size()];
 
-	Pathfinding::Search::aStar(start,
+	graph::Search::aStar(start,
 							   m_nodes[rand() % m_nodes.size()],
 							   m_path,
 							   MyNode::heuristicDistanceSqr);
@@ -99,14 +99,14 @@ bool PathfindingApp::startup() {
 
 	m_player.getBlackboard().set("path", &m_path);
 	m_player.getBlackboard().set("speed", 100.0f);
-	m_player.setPosition(start->x, start->y);
+	m_player.setPosition({ start->x, start->y, 0 });
 
 	// create tree
-	auto selector = new SelectorBehaviour();
+	auto selector = new ai::SelectorBehaviour();
 	auto followPath = new FollowPathBehaviour();
 	auto newPath = new NewPathBehaviour(m_nodes);
 
-	auto logDecorator = new LogDecorator(newPath, "Finding New Path");
+	auto logDecorator = new ai::LogDecorator(newPath, "Finding New Path");
 
 	selector->addChild(followPath);
 	selector->addChild(logDecorator);
@@ -125,15 +125,15 @@ void PathfindingApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void PathfindingApp::update(float deltaTime) {
+void PathfindingApp::update() {
 
-	m_player.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 }
 
@@ -195,9 +195,8 @@ void PathfindingApp::draw() {
 	}
 
 	m_2dRenderer->setRenderColour(1, 0, 0);
-	float x, y;
-	m_player.getPosition(&x, &y);
-	m_2dRenderer->drawCircle(x, y, 10);
+	auto position = m_player.getPosition();
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 	// draw graph
 	for (auto node : m_nodes) {
@@ -233,44 +232,37 @@ void PathfindingApp::draw() {
 	m_2dRenderer->end();
 }
 
-eBehaviourResult FollowPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult FollowPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Pathfinding::Node*>* path = nullptr;
+	std::list<graph::Node*>* path = nullptr;
 	if (entity->getBlackboard().get("path", &path) == false ||
 		path->empty())
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
 	float speed = 0;
 	entity->getBlackboard().get("speed", speed);
 
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// access first node we're heading towards
 	MyNode* first = (MyNode*)path->front();
 
 	// distance to first
-	float xDiff = first->x - x;
-	float yDiff = first->y - y;
-
-	float distance = xDiff * xDiff + yDiff * yDiff;
+	auto diff = glm::vec3(first->x, first->y,0) - position;
 
 	// if not at the target then move towards it
-	if (distance > 25) {
-
-		distance = sqrt(distance);
-		xDiff /= distance;
-		yDiff /= distance;
+	if (glm::dot(diff, diff) > 25) {
+		
 
 		// move to target (can overshoot!)
-		entity->translate(xDiff * speed * deltaTime, yDiff * speed * deltaTime);
+		entity->translate(glm::normalize(diff) * speed * app::Time::deltaTime());
 	}
 	else {
 		// at the node, remove it and move to the next
 		path->pop_front();
 	}
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }
 
 MyNode* findClosest(float x, float y, std::vector<MyNode*>& nodes) {
@@ -291,27 +283,26 @@ MyNode* findClosest(float x, float y, std::vector<MyNode*>& nodes) {
 	return closest;
 }
 
-eBehaviourResult NewPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult NewPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Pathfinding::Node*>* path = nullptr;
+	std::list<graph::Node*>* path = nullptr;
 	if (entity->getBlackboard().get("path", &path) == false)
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// random end node
 	bool found = false;
 	do {
 
-		auto first = findClosest(x, y, m_nodes);
+		auto first = findClosest(position.x, position.y, m_nodes);
 		auto end = m_nodes[rand() % m_nodes.size()];
 
-		found = Pathfinding::Search::aStar(first, end, *path, MyNode::heuristicDistanceSqr);
+		found = graph::Search::aStar(first, end, *path, MyNode::heuristicDistanceSqr);
 
 	} while (found == false);
 
 
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }

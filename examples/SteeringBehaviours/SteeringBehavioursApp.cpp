@@ -14,37 +14,37 @@ SteeringBehavioursApp::~SteeringBehavioursApp() {
 
 bool SteeringBehavioursApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 		
 	// setup player
 	m_keyboardBehaviour.setSpeed(400);
-	m_player.setPosition(getWindowWidth() * 0.5f, getWindowHeight() * 0.5f);
+	m_player.setPosition({ getWindowWidth() * 0.5f, getWindowHeight() * 0.5f, 0 });
 	m_player.addBehaviour(&m_keyboardBehaviour);
 
 	// setup steering properties for zombies
 	m_seek.setTarget(&m_player);
 	m_flee.setTarget(&m_player);
-	m_avoid.setFeelerLength(80);
+//	m_avoid.setFeelerLength(80);
 
 	// set up "zombie" finite state machine using steering
-	m_attackState = new SteeringState();
+	m_attackState = new ai::SteeringState();
 	m_attackState->addForce(&m_wander, .2f);
 	m_attackState->addForce(&m_seek, .8f);
 	m_attackState->addForce(&m_flee, 0);
-	m_attackState->addForce(&m_avoid, 1);
+//	m_attackState->addForce(&m_avoid, 1);
 
-	SteeringState* wanderState = new SteeringState();
+	ai::SteeringState* wanderState = new ai::SteeringState();
 	wanderState->addForce(&m_wander, 1);
-	wanderState->addForce(&m_avoid, 1);
+//	wanderState->addForce(&m_avoid, 1);
 
 	// set conditions for state transitions
-	Condition* withinRangeCondition = new WithinRangeCondition(&m_player, 200);
-	Condition* notWithinRangeCondition = new NotCondition(withinRangeCondition);
+	ai::Condition* withinRangeCondition = new ai::WithinRangeCondition(&m_player, 200);
+	ai::Condition* notWithinRangeCondition = new ai::NotCondition(withinRangeCondition);
 
-	Transition* withinRange = new Transition(m_attackState, withinRangeCondition);
-	Transition* notWithinRange = new Transition(wanderState, notWithinRangeCondition);
+	ai::Transition* withinRange = new ai::Transition(m_attackState, withinRangeCondition);
+	ai::Transition* notWithinRange = new ai::Transition(wanderState, notWithinRangeCondition);
 
 	m_attackState->addTransition(notWithinRange);
 	wanderState->addTransition(withinRange);
@@ -64,28 +64,26 @@ bool SteeringBehavioursApp::startup() {
 		enemy.addBehaviour(&m_fsm);
 		enemy.getBlackboard().set("currentState", wanderState);
 
-		Vector2* v = new Vector2();
-		v->x = 0;
-		v->y = 0;
+		glm::vec3* v = new glm::vec3(0,0,0);
 		enemy.getBlackboard().set("velocity", v, true);
 
-		WanderData* wd = new WanderData();
+		ai::WanderData* wd = new ai::WanderData();
 		wd->offset = 100;
 		wd->radius = 75;
 		wd->jitter = 25;
-		wd->x = 0;
-		wd->y = 0;
+		wd->target = glm::vec3(0);
+		wd->axisWeights = glm::vec3(1, 1, 0);
 		enemy.getBlackboard().set("wanderData", wd, true);
 
 		enemy.getBlackboard().set("maxForce", 300.f);
 		enemy.getBlackboard().set("maxVelocity", 150.f);
 		
-		enemy.setPosition( float(rand() % getWindowWidth()),
-						   float(rand() % getWindowHeight()));
+		enemy.setPosition({ float(rand() % getWindowWidth()),
+						   float(rand() % getWindowHeight()), 0 });
 	}
 
 	// set up my obstacles
-	for (int i = 0; i < 10; ++i) {
+/*	for (int i = 0; i < 10; ++i) {
 
 		Obstacle o;
 		o.x = rand() % (getWindowWidth() - 150) + 75.f;
@@ -103,7 +101,7 @@ bool SteeringBehavioursApp::startup() {
 		}
 
 		m_obstacles.push_back(o);
-	}
+	}*/
 
 	return true;
 }
@@ -114,40 +112,30 @@ void SteeringBehavioursApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void SteeringBehavioursApp::update(float deltaTime) {
+void SteeringBehavioursApp::update() {
 	
 	// update behaviours
-	m_player.executeBehaviours(deltaTime);
+	m_player.executeBehaviours();
 
 	for (auto& enemy : m_enemies)
-		enemy.executeBehaviours(deltaTime);
+		enemy.executeBehaviours();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
 	// change the zombies from angry to scared and vice versa
-	if (input->wasKeyPressed(INPUT_KEY_F)) {
+	if (input->wasKeyPressed(app::INPUT_KEY_F)) {
 		m_attackState->setWeightForForce(&m_flee, 0.8f);
 		m_attackState->setWeightForForce(&m_seek, 0);
 	}
-	if (input->wasKeyPressed(INPUT_KEY_S)) {
+	if (input->wasKeyPressed(app::INPUT_KEY_S)) {
 		m_attackState->setWeightForForce(&m_flee, 0);
 		m_attackState->setWeightForForce(&m_seek, 0.8f);
 	}
-}
-
-void SteeringBehavioursApp::screenWrap(float& x, float& y) {
-	// wrap position around the screen
-	x = fmod(x, (float)getWindowWidth());
-	if (x < 0)
-		x += getWindowWidth();
-	y = fmod(y, (float)getWindowHeight());
-	if (y < 0)
-		y += getWindowHeight();
 }
 
 void SteeringBehavioursApp::draw() {
@@ -159,26 +147,24 @@ void SteeringBehavioursApp::draw() {
 	m_2dRenderer->begin();
 
 	// draw obstacles as pink circles
-	for (auto obstacle : m_obstacles) {
+	/*for (auto obstacle : m_obstacles) {
 		m_2dRenderer->setRenderColour(1, 0, 1);
 		if (obstacle.type == Obstacle::SPHERE)
 			m_2dRenderer->drawCircle(obstacle.x, obstacle.y, obstacle.r);
 		if (obstacle.type == Obstacle::BOX)
 			m_2dRenderer->drawBox(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
-	}
-
-	float x = 0, y = 0;
-
+	}*/
+	
 	// draw player as a green circle
-	m_player.getPosition(&x, &y);
+	auto position = m_player.getPosition();
 	m_2dRenderer->setRenderColour(0, 1, 0);
-	m_2dRenderer->drawCircle(x, y, 10);
+	m_2dRenderer->drawCircle(position.x, position.y, 10);
 
-	screenWrap(x, y);
-	m_player.setPosition(x, y);
+	screenWrap(position);
+	m_player.setPosition(position);
 
 	float vx, vy;
-	Vector2* v = nullptr;
+	glm::vec3* v = nullptr;
 
 	float s = sinf(3.14159f*0.15f);
 	float c = cosf(3.14159f*0.15f);
@@ -187,12 +173,12 @@ void SteeringBehavioursApp::draw() {
 
 	// draw enemies as a red circle
 	for (auto& enemy : m_enemies) {
-		enemy.getPosition(&x, &y);
+		position = enemy.getPosition();
 		m_2dRenderer->setRenderColour(1, 0, 0);
-		m_2dRenderer->drawCircle(x, y, 10);
+		m_2dRenderer->drawCircle(position.x, position.y, 10);
 
-		screenWrap(x, y);
-		enemy.setPosition(x, y);
+		screenWrap(position);
+		enemy.setPosition(position);
 		
 		// draw feelers
 		m_2dRenderer->setRenderColour(1, 1, 0);
@@ -207,10 +193,10 @@ void SteeringBehavioursApp::draw() {
 				vx /= magSqr;
 				vy /= magSqr;
 
-				m_2dRenderer->drawLine(x, y, x + vx * 80, y + vy * 80);
+				m_2dRenderer->drawLine(position.x, position.y, position.x + vx * 80, position.y + vy * 80);
 
-				m_2dRenderer->drawLine(x, y, x + (vx * c - vy * s) * 80 * 0.5f, y + (vx * s + vy * c) * 80 * 0.5f);
-				m_2dRenderer->drawLine(x, y, x + (vx * c2 - vy * s2) * 80 * 0.5f, y + (vx * s2 + vy * c2) * 80 * 0.5f);
+				m_2dRenderer->drawLine(position.x, position.y, position.x + (vx * c - vy * s) * 80 * 0.5f, position.y + (vx * s + vy * c) * 80 * 0.5f);
+				m_2dRenderer->drawLine(position.x, position.y, position.x + (vx * c2 - vy * s2) * 80 * 0.5f, position.y + (vx * s2 + vy * c2) * 80 * 0.5f);
 			}
 		}
 	}

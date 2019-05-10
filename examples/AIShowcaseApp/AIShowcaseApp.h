@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 #include "Texture.h"
-
+#include "Timing.h"
 #include "Pathfinding.h"
 #include "Entity.h"
 #include "Behaviour.h"
@@ -64,10 +64,10 @@ enum eSprites {
 };
 
 // a pathfinding node with a 2D position
-class MyNode : public Pathfinding::Node {
+class MyNode : public graph::Node {
 public:
 
-	MyNode(float x, float y) : x(x), y(y) {}
+	MyNode(float x, float y, float z = 0) : position(x,y,z) {}
 	virtual ~MyNode() {}
 
 	static float heuristic(Node* a, Node* b) {
@@ -75,135 +75,134 @@ public:
 		MyNode* s = (MyNode*)a;
 		MyNode* e = (MyNode*)b;
 
-		float x = e->x - s->x;
-		float y = e->y - s->y;
+		auto diff = e->position - s->position;
 
-		return x * x + y * y;
+		return glm::dot(diff, diff);
 	}
 	
-	float x, y;
+	glm::vec3 position;
 };
 
-class AttackTimerBehaviour : public Behaviour {
+class AttackTimerBehaviour : public ai::Behaviour {
 public:
 
 	AttackTimerBehaviour() {}
 	virtual ~AttackTimerBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		// simply reduce the attack timer
 		float timer = 0;
 		if (entity->getBlackboard().get("attackTimer", timer)) {
-			timer -= deltaTime;
+			timer -= app::Time::deltaTime();
 			entity->getBlackboard().set("attackTimer", timer);
 		}
-		return eBehaviourResult::SUCCESS;
+		return ai::eBehaviourResult::SUCCESS;
 	}
 };
 
-class FollowPathBehaviour : public Behaviour {
+class FollowPathBehaviour : public ai::Behaviour {
 public:
 
 	FollowPathBehaviour() {}
 	virtual ~FollowPathBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual ai::eBehaviourResult execute(ai::Entity* entity);
 };
 
-class NewPathBehaviour : public Behaviour {
+class NewPathBehaviour : public ai::Behaviour {
 public:
 
 	NewPathBehaviour(std::vector<MyNode*>& nodes) : m_nodes(nodes) {}
 	virtual ~NewPathBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime);
+	virtual ai::eBehaviourResult execute(ai::Entity* entity);
 
 protected:
 
-	MyNode* findClosest(float x, float y);
+	MyNode* findClosest(const glm::vec3& p);
 
 	std::vector<MyNode*>& m_nodes;
 };
 
-class WaterAvoidanceForce : public SteeringForce {
+class WaterAvoidanceForce : public ai::SteeringForce {
 public:
 	WaterAvoidanceForce() : m_map(nullptr), m_feelerLength(1) {}
 	virtual ~WaterAvoidanceForce() {}
 
 	void setFeelerLength(float length) { m_feelerLength = length; }
 
-	void setMapData(Texture* map, float tileWidth, float tileHeight) {
+	void setMapData(app::Texture* map, float tileWidth, float tileHeight) {
 		m_map = map;
 		m_tileWidth = tileWidth;
 		m_tileHeight = tileHeight;
 	}
 
 	// pure virtual function
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(ai::Entity* entity) const;
 
 protected:
 
-	void collideWithBox(float x, float y, float vx, float vy,
-						float boxX, float boxY, Force& force) const;
+	void collideWithBox(const glm::vec3& p, const glm::vec3& v,
+						const glm::vec3& c, glm::vec3& force) const;
 
-	aie::Texture*	m_map;
+	app::Texture*	m_map;
 	float			m_tileWidth, m_tileHeight;
 	float			m_feelerLength;
 };
 
-class IsDeadBehaviour : public Behaviour {
+class IsDeadBehaviour : public ai::Behaviour {
 public:
 
 	IsDeadBehaviour() {}
 	virtual ~IsDeadBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		float health;
 		if (entity->getBlackboard().get("health", health) &&
 			health <= 0.f) {
-			return eBehaviourResult::SUCCESS;
+			return ai::eBehaviourResult::SUCCESS;
 		}
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 	}
 };
 
-class RespawnBehaviour : public Behaviour {
+class RespawnBehaviour : public ai::Behaviour {
 public:
 
 	RespawnBehaviour() {}
 	virtual ~RespawnBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
-		std::function<void(Entity*)>* respawnFunction = nullptr;
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+		std::function<void(ai::Entity*)>* respawnFunction = nullptr;
 		if (entity->getBlackboard().get("respawnFunction", &respawnFunction) &&
 			respawnFunction != nullptr &&
 			(*respawnFunction)) {
 			(*respawnFunction)(entity);
 		}
-		return eBehaviourResult::SUCCESS;
+		return ai::eBehaviourResult::SUCCESS;
 	}
 };
 
-class TrackClosestBehaviour : public Behaviour {
+class TrackClosestBehaviour : public ai::Behaviour {
 public:
 
 	TrackClosestBehaviour() {}
 	virtual ~TrackClosestBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 
-		std::vector<Entity>* targets = nullptr;
+		std::vector<ai::Entity>* targets = nullptr;
 		if (entity->getBlackboard().get("targets", &targets)) {
 
-			entity* closest = nullptr;
+			ai::Entity* closest = nullptr;
 			float closestDist = 99999.f * 99999.f;
-			float x, y, tx, ty;
-			entity->getPosition(&x, &y);
+			auto position = entity->getPosition();
 
 			for (auto& t : *targets) {
-				t.getPosition(&tx, &ty);
+				auto target = t.getPosition();
+				auto diff = position - target;
 
-				float dist = (x - tx) * (x - tx) + (y - ty) * (y - ty);
+				float dist = glm::dot(diff, diff);
 				if (dist < closestDist) {
 					closest = &t;
 					closestDist = dist;
@@ -212,68 +211,68 @@ public:
 
 			entity->getBlackboard().set("target", closest);
 		}
-		return eBehaviourResult::SUCCESS;
+		return ai::eBehaviourResult::SUCCESS;
 	}
 };
 
-class ClosestWithinAttackRangeBehaviour : public Behaviour {
+class ClosestWithinAttackRangeBehaviour : public ai::Behaviour {
 public:
 
 	ClosestWithinAttackRangeBehaviour() {}
 	virtual ~ClosestWithinAttackRangeBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		float attackRange = 0;
-		Entity* target = nullptr;
+		ai::Entity* target = nullptr;
 		if (entity->getBlackboard().get("attackRange", attackRange) &&
 			entity->getBlackboard().get("target", &target) &&
 			target != nullptr) {
 
-			float x, y, tx, ty;
-			entity->getPosition(&x, &y);
-			target->getPosition(&tx, &ty);
-
-			if (((x - tx) * (x - tx) + (y - ty) * (y - ty)) <= (attackRange * attackRange))
-				return eBehaviourResult::SUCCESS;
+			auto position = entity->getPosition();
+			auto targetPos = target->getPosition();
+			auto diff = position - targetPos;
+			
+			if (glm::dot(diff, diff) <= (attackRange * attackRange))
+				return ai::eBehaviourResult::SUCCESS;
 		}
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 	}
 };
 
-class ClosestWithinChaseRangeBehaviour : public Behaviour {
+class ClosestWithinChaseRangeBehaviour : public ai::Behaviour {
 public:
 
 	ClosestWithinChaseRangeBehaviour() {}
 	virtual ~ClosestWithinChaseRangeBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		float chaseRange = 0;
-		Entity* target = nullptr;
+		ai::Entity* target = nullptr;
 		if (entity->getBlackboard().get("chaseRange", chaseRange) &&
 			entity->getBlackboard().get("target", &target) &&
 			target != nullptr) {
 
-			float x, y, tx, ty;
-			entity->getPosition(&x, &y);
-			target->getPosition(&tx, &ty);
+			auto position = entity->getPosition();
+			auto targetPos = target->getPosition();
+			auto diff = position - targetPos;
 
-			if (((x - tx) * (x - tx) + (y - ty) * (y - ty)) <= (chaseRange * chaseRange))
-				return eBehaviourResult::SUCCESS;
+			if (glm::dot(diff, diff) <= (chaseRange * chaseRange))
+				return ai::eBehaviourResult::SUCCESS;
 		}
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 	}
 };
 
-class AttackClosestBehaviour : public Behaviour {
+class AttackClosestBehaviour : public ai::Behaviour {
 public:
 
 	AttackClosestBehaviour() {}
 	virtual ~AttackClosestBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		float attackTimer = 0;
 		float attackSpeed = 0;
-		Entity* target = nullptr;
+		ai::Entity* target = nullptr;
 		float strength = 0;
 		float health = 0;
 		if (entity->getBlackboard().get("attackTimer", attackTimer) &&
@@ -287,36 +286,36 @@ public:
 			target->getBlackboard().set("health", health);
 
 			entity->getBlackboard().set("attackTimer", attackSpeed);
-			return eBehaviourResult::SUCCESS;
+			return ai::eBehaviourResult::SUCCESS;
 		}
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 	}
 };
 
-class SeekClosestForce : public SteeringForce {
+class SeekClosestForce : public ai::SteeringForce {
 public:
 
 	SeekClosestForce() {}
 	virtual ~SeekClosestForce() {}
 
-	virtual Force getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(ai::Entity* entity) const;
 };
 
-class EnumBehaviour : public CompositeBehaviour {
+class EnumBehaviour : public ai::CompositeBehaviour {
 public:
 
 	EnumBehaviour() {}
 	virtual ~EnumBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity, float deltaTime) {
+	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
 		int index = 0;
 		entity->getBlackboard().get("type", index);
 
-		return m_children[index]->execute(entity, deltaTime);
+		return m_children[index]->execute(entity);
 	}
 };
 
-class AIShowcaseApp : public Application {
+class AIShowcaseApp : public app::Application {
 public:
 
 	AIShowcaseApp();
@@ -325,7 +324,7 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual void update();
 	virtual void draw();
 
 protected:
@@ -338,12 +337,12 @@ protected:
 		float u, v;
 	};
 
-	Renderer2D*	m_2dRenderer;
-	Font*		m_font;
-	Texture*	m_map;
-	Texture*	m_background;
-	Texture*	m_spriteSheet;
-	Texture*	m_characterSprites;
+	app::Renderer2D*	m_2dRenderer;
+	app::Font*		m_font;
+	app::Texture*	m_map;
+	app::Texture*	m_background;
+	app::Texture*	m_spriteSheet;
+	app::Texture*	m_characterSprites;
 
 	int*	m_tiles;
 	Sprite	m_sprites[eSprites_Count];
@@ -355,32 +354,32 @@ protected:
 		CAVEMAN,
 	};
 
-	std::vector<Entity> m_knights;
-	std::vector<Entity> m_cavemen;
+	std::vector<ai::Entity> m_knights;
+	std::vector<ai::Entity> m_cavemen;
 
 	AttackTimerBehaviour m_attackTimerBehaviour;
 
-	SelectorBehaviour m_knightBehaviour;
+	ai::SelectorBehaviour m_knightBehaviour;
 	FollowPathBehaviour	m_followPathBehaviour;
 	NewPathBehaviour m_newPathBehaviour;
 
-	SteeringBehaviour m_cavemanBehaviour;
+	ai::SteeringBehaviour m_cavemanBehaviour;
 	WaterAvoidanceForce m_waterAvoidanceForce;
-	WanderForce m_wanderForce;
+	ai::WanderForce m_wanderForce;
 
-	SteeringBehaviour m_chaseBehaviour;
+	ai::SteeringBehaviour m_chaseBehaviour;
 	SeekClosestForce m_seekClosestForce;
 
-	SelectorBehaviour m_rootBehaviour;
+	ai::SelectorBehaviour m_rootBehaviour;
 
 	IsDeadBehaviour m_isDeadBehaviour;
 	RespawnBehaviour m_respawnBehaviour;
 
-	SequenceBehaviour m_attackRootBehaviour;
+	ai::SequenceBehaviour m_attackRootBehaviour;
 	AttackClosestBehaviour m_attackBehaviour;
 
-	SequenceBehaviour m_chaseRootBehaviour;
-	SequenceBehaviour m_deathRootBehaviour;
+	ai::SequenceBehaviour m_chaseRootBehaviour;
+	ai::SequenceBehaviour m_deathRootBehaviour;
 
 	EnumBehaviour m_subBehaviour;
 

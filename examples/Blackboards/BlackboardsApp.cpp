@@ -1,6 +1,7 @@
 #include "BlackboardsApp.h"
 #include "Font.h"
 #include "Input.h"
+#include "Timing.h"
 
 BlackboardsApp::BlackboardsApp()
 	: m_requireFiremanQuestion(eBlackboardQuestionType::REQUIRE_FIREMAN),
@@ -15,13 +16,13 @@ BlackboardsApp::~BlackboardsApp() {
 
 bool BlackboardsApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 
 	// setup the behaviour of entities
 
-	auto wanderState = new SteeringState();
+	auto wanderState = new ai::SteeringState();
 	wanderState->addForce(&m_wander);
 
 	auto idleState = new IdleState();
@@ -30,14 +31,14 @@ bool BlackboardsApp::startup() {
 	// conditions for triggering transitions
 	auto needHelpCondition = new BlackboardBoolCondition("requireHelp");
 	auto helpingCondition = new BlackboardHasEntryCondition("target");
-	auto dontNeedHelpCondition = new NotCondition(needHelpCondition);
-	auto notHelpingCondition = new NotCondition(helpingCondition);
+	auto dontNeedHelpCondition = new ai::NotCondition(needHelpCondition);
+	auto notHelpingCondition = new ai::NotCondition(helpingCondition);
 
 	// transitions between states
-	auto toHelpingTransition = new Transition(helpState, helpingCondition);
-	auto toIdleTransition = new Transition(idleState, needHelpCondition);
-	auto toIdleFromHelpingTransition = new Transition(idleState, notHelpingCondition);
-	auto toWanderTransition = new Transition(wanderState, dontNeedHelpCondition);
+	auto toHelpingTransition = new ai::Transition(helpState, helpingCondition);
+	auto toIdleTransition = new ai::Transition(idleState, needHelpCondition);
+	auto toIdleFromHelpingTransition = new ai::Transition(idleState, notHelpingCondition);
+	auto toWanderTransition = new ai::Transition(wanderState, dontNeedHelpCondition);
 
 	wanderState->addTransition(toIdleTransition);
 	wanderState->addTransition(toHelpingTransition);
@@ -66,17 +67,17 @@ bool BlackboardsApp::startup() {
 
 		auto& blackboard = go.getBlackboard();
 
-		Vector2* v = new Vector2();
+		glm::vec3* v = new glm::vec3();
 		v->x = 0;
 		v->y = 0;
 		blackboard.set("velocity", v, true);
 
-		WanderData* wd = new WanderData();
+		ai::WanderData* wd = new ai::WanderData();
 		wd->offset = 100;
 		wd->radius = 75;
 		wd->jitter = 25;
-		wd->x = 0;
-		wd->y = 0;
+		wd->target = glm::vec3(0);
+		wd->axisWeights = glm::vec3(1, 1, 0);
 		blackboard.set("wanderData", wd, true);
 
 		blackboard.set("speed", 75.f);
@@ -93,8 +94,8 @@ bool BlackboardsApp::startup() {
 		go.addBehaviour(&m_fsm);
 		go.addBehaviour(&m_respondBehaviour);
 
-		go.setPosition(float(rand() % getWindowWidth()),
-					   float(rand() % getWindowHeight()));
+		go.setPosition({ float(rand() % getWindowWidth()),
+					   float(rand() % getWindowHeight()), 0 });
 	}
 
 	return true;
@@ -106,12 +107,12 @@ void BlackboardsApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void BlackboardsApp::update(float deltaTime) {
+void BlackboardsApp::update() {
 
 	// post question every few seconds
 	// this is a hack: usually an entity's behaviour would
 	// make it ask for help
-	m_someoneNeedsHelpTimer -= deltaTime;
+	m_someoneNeedsHelpTimer -= app::Time::deltaTime();
 	if (m_someoneNeedsHelpTimer <= 0) {
 
 		// post a question and pick a random that needs help
@@ -133,27 +134,17 @@ void BlackboardsApp::update(float deltaTime) {
 	
 	// update behaviours (will also respond to questions)
 	for (auto& entity : m_entities)
-		entity.executeBehaviours(deltaTime);
+		entity.executeBehaviours();
 
 	// arbitrate questions
 	m_globalBlackboard.runArbitration();
 
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
-}
-
-void BlackboardsApp::screenWrap(float& x, float& y) {
-	// wrap position around the screen
-	x = fmod(x, (float)getWindowWidth());
-	if (x < 0)
-		x += getWindowWidth();
-	y = fmod(y, (float)getWindowHeight());
-	if (y < 0)
-		y += getWindowHeight();
 }
 
 void BlackboardsApp::draw() {
@@ -165,7 +156,6 @@ void BlackboardsApp::draw() {
 	m_2dRenderer->begin();
 
 	int entityClass = eEntityClass::CIVILIAN;
-	float x, y;
 
 	// draw entities
 	for (auto& go : m_entities) {
@@ -179,18 +169,18 @@ void BlackboardsApp::draw() {
 		default:	m_2dRenderer->setRenderColour(0, 1, 1);	break;
 		};
 
-		go.getPosition(&x, &y);
-		screenWrap(x, y);
-		go.setPosition(x, y);
+		auto position = go.getPosition();
+		screenWrap(position);
+		go.setPosition(position);
 
-		m_2dRenderer->drawCircle(x, y, 10);
+		m_2dRenderer->drawCircle(position.x, position.y, 10);
 
 		// draw red circle around entities needing help
 		bool requireHelp = false;
 		go.getBlackboard().get("requireHelp", requireHelp);
 		if (requireHelp) {
 			m_2dRenderer->setRenderColour(1, 0, 0);
-			m_2dRenderer->drawCircle(x, y, 20);
+			m_2dRenderer->drawCircle(position.x, position.y, 20);
 		}
 	}
 
@@ -206,7 +196,7 @@ void BlackboardsApp::draw() {
 	m_2dRenderer->end();
 }
 
-float Myentity::evaluateResponse(BlackboardQuestion* question, Blackboard* blackboard) {
+float MyEntity::evaluateResponse(ai::BlackboardQuestion* question, ai::Blackboard* blackboard) {
 
 	NeedHelpQuestion* q = (NeedHelpQuestion*)question;
 
@@ -221,18 +211,17 @@ float Myentity::evaluateResponse(BlackboardQuestion* question, Blackboard* black
 		m_blackboard.contains("target") == false &&
 		requireHelp == false) {
 
-		float tx, ty;
-		q->needsHelp->getPosition(&tx, &ty);
+		auto target = q->needsHelp->getPosition();
+		auto position = getPosition();
 
-		float xDiff = tx - m_x;
-		float yDiff = ty - m_y;
+		auto diff = target - position;
 
-		return 9999999.0f - (xDiff * xDiff + yDiff * yDiff);
+		return 9999999.0f - glm::dot(diff, diff);
 	}
 	return 0;
 }
 
-void Myentity::execute(BlackboardQuestion* question, Blackboard* blackboard) {
+void MyEntity::execute(ai::BlackboardQuestion* question, ai::Blackboard* blackboard) {
 
 	NeedHelpQuestion* q = (NeedHelpQuestion*)question;
 
@@ -240,9 +229,9 @@ void Myentity::execute(BlackboardQuestion* question, Blackboard* blackboard) {
 	m_blackboard.set("target", q->needsHelp);
 }
 
-void HelpEntityState::update(Entity* entity, float deltaTime) {
+void HelpEntityState::update(ai::Entity* entity) {
 
-	Entity* target = nullptr;
+	ai::Entity* target = nullptr;
 	entity->getBlackboard().get("target", &target);
 
 	if (target == nullptr)
@@ -253,27 +242,19 @@ void HelpEntityState::update(Entity* entity, float deltaTime) {
 
 	// move to target
 	// get target position
-	float tx = 0, ty = 0;
-	target->getPosition(&tx, &ty);
+	auto targetPos = target->getPosition();
 
 	// get my position
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// compare the two and get the distance between them
-	float xDiff = tx - x;
-	float yDiff = ty - y;
-	float distance = xDiff * xDiff + yDiff * yDiff;
+	auto diff = targetPos - position;
 
 	// if not at the target then move towards them
-	if (distance > 25) {
-
-		distance = sqrt(distance);
-		xDiff /= distance;
-		yDiff /= distance;
+	if (glm::dot(diff, diff) > 25) {
 
 		// move to target
-		entity->translate(xDiff * speed * deltaTime, yDiff * speed * deltaTime);
+		entity->translate(glm::normalize(diff) * speed * app::Time::deltaTime());
 	}
 	else {
 		// tag, they're helped!
@@ -283,7 +264,7 @@ void HelpEntityState::update(Entity* entity, float deltaTime) {
 }
 
 // go through questions and respond to those we think are valid
-eBehaviourResult BlackboardRespondBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult BlackboardRespondBehaviour::execute(ai::Entity* entity) {
 
 	auto& questions = m_blackboard->getQuestions();
 
@@ -299,8 +280,8 @@ eBehaviourResult BlackboardRespondBehaviour::execute(Entity* entity, float delta
 			 entityClass == eEntityClass::MEDIC) ||
 			(type == eBlackboardQuestionType::REQUIRE_FIREMAN &&
 			 entityClass == eEntityClass::FIREMAN))
-			question->addExpert((Myentity*)entity);
+			question->addExpert((MyEntity*)entity);
 	}
 
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }

@@ -1,33 +1,30 @@
 #include "Intersection.h"
 
 #include <math.h>
+#include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
 namespace intersection {
 
 // returns true if the ray intersects the circle
-bool rayCircleIntersection(float px, float py,	// ray start
-						   float dx, float dy,	// ray direction
-						   float cx, float cy, float r,	// circle position and radius
-						   float& ix, float& iy,	// intersection point
+bool rayCircleIntersection(const glm::vec3& p,	// ray start
+						   const glm::vec3& d,	// ray direction
+						   const glm::vec3& c, float r,	// circle position and radius
+						   glm::vec3& i,	// intersection point
 						   float* t) {	// distance along normalised ray direction to intersection
 
 													// normalise direction
-	float temp = dx * dx + dy * dy;
+	float temp = glm::dot(d,d);
 	if (temp == 0)
 		return false;
 
-	temp = sqrtf(temp);
-
-	dx /= temp;
-	dy /= temp;
+	auto dir = glm::normalize(d);
 
 	// get vector from line start to circle centre
-	float ex = cx - px;
-	float ey = cy - py;
+	auto e = c - p;
 
 	// get squared length of e
-	float e2 = ex * ex + ey * ey;
+	float e2 = glm::dot(e,e);
 
 	// get squared radius
 	float r2 = r * r;
@@ -35,12 +32,11 @@ bool rayCircleIntersection(float px, float py,	// ray start
 	// determine if starting inside circle
 	if (e2 < r2) {
 		// if inside then reverse test direction
-		dx *= -1;
-		dy *= -1;
+		dir *= -1;
 	}
 
 	// project sphere centre onto d to get edge of a triangle
-	float a = ex * dx + ey * dy;
+	float a = glm::dot(e, d);
 
 	// squared edge length
 	float a2 = a * a;
@@ -56,8 +52,7 @@ bool rayCircleIntersection(float px, float py,	// ray start
 	// calculate distance in direction d from p that the intersection occurs
 	temp = a - sqrtf(f2);
 
-	ix = dx * temp + px;
-	iy = dy * temp + py;
+	i = d * temp + p;
 
 	if (t != nullptr)
 		*t = temp;
@@ -65,10 +60,10 @@ bool rayCircleIntersection(float px, float py,	// ray start
 	return true;
 }
 
-bool rayBoxIntersection(float px, float py,	// ray start
-						float dx, float dy,	// ray direction
-						float x, float y, float w, float h,	// box position and size
-						float& nx, float& ny,	// normal of intersection
+bool rayBoxIntersection(const glm::vec3& p,	// ray start
+						const glm::vec3& d,	// ray direction (length of ray included)
+						const glm::vec3& c, const glm::vec3& e, // box position and size
+						glm::vec3& n,	// normal of intersection
 						float* t) {	// distance along ray direction to intersection
 
 	using glm::max;
@@ -76,45 +71,45 @@ bool rayBoxIntersection(float px, float py,	// ray start
 
 	bool inside = true;
 
-	nx = ny = 0;
+	n = { 0,0,0 };
 
 	float xt;
-	if (px < x) {
-		xt = x - px;
-		if (xt > dx)
+	if (p.x < c.x) {
+		xt = c.x - p.x;
+		if (xt > d.x)
 			return false;
 		inside = false;
-		xt /= dx;
-		nx = -1;
+		xt /= d.x;
+		n.x = -1;
 	}
-	else if (px > (x + w)) {
-		xt = (x + w) - px;
-		if (xt < dx)
+	else if (p.x > (c.x + e.x)) {
+		xt = (c.x + e.x) - p.x;
+		if (xt < d.x)
 			return false;
 		inside = false;
-		xt /= dx;
-		nx = 1;
+		xt /= d.x;
+		n.x = 1;
 	}
 	else {
 		xt = -1;
 	}
 
 	float yt;
-	if (py < y) {
-		yt = y - py;
-		if (yt > dy)
+	if (p.y < c.y) {
+		yt = c.y - p.y;
+		if (yt > d.y)
 			return false;
 		inside = false;
-		yt /= dy;
-		ny = -1;
+		yt /= d.y;
+		n.y = -1;
 	}
-	else if (py > (y + h)) {
-		yt = (y + h) - py;
-		if (yt < dy)
+	else if (p.y > (c.y + e.y)) {
+		yt = (c.y + e.y) - p.y;
+		if (yt < d.y)
 			return false;
 		inside = false;
-		yt /= dy;
-		ny = 1;
+		yt /= d.y;
+		n.y = 1;
 	}
 	else {
 		yt = -1;
@@ -126,16 +121,16 @@ bool rayBoxIntersection(float px, float py,	// ray start
 	}
 	else if (yt > xt) {
 		// intersect with y plane?
-		float ty = py + dy * yt;
-		if (ty < y || ty > (y + h))
+		float ty = p.y + d.y * yt;
+		if (ty < c.y || ty > (c.y + e.y))
 			return false;
 		if (t != nullptr)
 			*t = yt;
 	}
 	else {
 		// intersect with x plane?
-		float tx = px + dx * xt;
-		if (tx < x || tx > (x + w))
+		float tx = p.x + d.x * xt;
+		if (tx < c.x || tx > (c.x + e.x))
 			return false;
 		if (t != nullptr)
 			*t = xt;

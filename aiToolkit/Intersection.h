@@ -1,19 +1,21 @@
 #pragma once
 
+#include <glm/fwd.hpp>
+
 namespace intersection {
 
 	// returns true if the ray intersects the circle
-	bool rayCircleIntersection(float px, float py,	// ray start
-							float dx, float dy,	// ray direction
-							float cx, float cy, float r,	// circle position and radius
-							float& ix, float& iy,	// intersection point
-							float* t = nullptr);	// distance along normalised ray direction to intersection
+	bool rayCircleIntersection(const glm::vec3& p,	// ray start
+							   const glm::vec3& d,	// ray direction
+							   const glm::vec3& c, float r,	// circle position and radius
+							   glm::vec3& i,	// intersection point
+							   float* t = nullptr);	// distance along normalised ray direction to intersection
 
 	// returns true if the ray intersects the circle
-	bool rayBoxIntersection(float px, float py,	// ray start
-							float dx, float dy,	// ray direction (length of ray included)
-							float x, float y, float w, float h, // box position and size
-							float& nx, float& ny,	// normal of intersection
+	bool rayBoxIntersection(const glm::vec3& p,	// ray start
+							const glm::vec3& d,	// ray direction (length of ray included)
+							const glm::vec3& c, const glm::vec3& e, // box position and size
+							glm::vec3& n,	// normal of intersection
 							float* t = nullptr); // distance along ray direction to intersection
 
 } // namespace intersection

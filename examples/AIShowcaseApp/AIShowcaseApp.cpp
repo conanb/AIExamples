@@ -1,9 +1,7 @@
 #include "AIShowcaseApp.h"
 #include "Font.h"
 #include "Input.h"
-
-#include "aiUtilities.h"
-
+#include "Intersection.h"
 #include <gl_core_4_4.h>
 
 int getWaterSprite(unsigned char spriteId);
@@ -37,14 +35,14 @@ AIShowcaseApp::~AIShowcaseApp() {
 
 bool AIShowcaseApp::startup() {
 	
-	m_2dRenderer = new Renderer2D();
+	m_2dRenderer = new app::Renderer2D();
 
-	m_font = new Font("./font/consolas.ttf", 32);
+	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 
-	m_map = new Texture("./map/map.bmp");
-	m_background = new Texture("./textures/background.png");
-	m_spriteSheet = new Texture("./textures/roguelikeSheet_transparent.png");
-	m_characterSprites = new Texture("./textures/roguelikeChar_transparent.png");
+	m_map = new app::Texture("../../bin/map/map.bmp");
+	m_background = new app::Texture("../../bin/textures/background.png");
+	m_spriteSheet = new app::Texture("../../bin/textures/roguelikeSheet_transparent.png");
+	m_characterSprites = new app::Texture("../../bin/textures/roguelikeChar_transparent.png");
 
 	// 1-pixel padding between sprites
 	float pw = 1.0f / m_spriteSheet->getWidth();
@@ -127,12 +125,11 @@ bool AIShowcaseApp::startup() {
 		for (auto b : m_pathNodes) {
 			if (a == b) continue;
 
-			float x = b->x - a->x;
-			float y = b->y - a->y;
-			float sqrDist = x * x + y * y;
+			auto diff = b->position - a->position;
+			float sqrDist = glm::dot(diff, diff);
 
 			if (sqrDist <= (30 * 30)) {
-				Pathfinding::Edge* edge = new Pathfinding::Edge();
+				graph::Edge* edge = new graph::Edge();
 				edge->cost = sqrDist;
 				edge->target = b;
 
@@ -184,11 +181,11 @@ bool AIShowcaseApp::startup() {
 
 		auto node = m_pathNodes[rand() % m_pathNodes.size()];
 
-		knight.setPosition(node->x, node->y);
+		knight.setPosition(node->position);
 
-		knight.getBlackboard().set("path", new std::list<Pathfinding::Node*>(), true);
-		knight.getBlackboard().set("velocity", new Vector2({ 0 }), true);
-		knight.getBlackboard().set("wanderData", new WanderData({ 100,75,25,0,0 }), true);
+		knight.getBlackboard().set("path", new std::list<graph::Node*>(), true);
+		knight.getBlackboard().set("velocity", new glm::vec3(0), true);
+		knight.getBlackboard().set("wanderData", new ai::WanderData({ 100,75,25,{0,0,0},{1,1,0} }), true);
 		knight.getBlackboard().set("maxForce", 100.f);
 		knight.getBlackboard().set("maxVelocity", 40.f);
 		knight.getBlackboard().set("speed", 50.0f);
@@ -203,19 +200,19 @@ bool AIShowcaseApp::startup() {
 		knight.getBlackboard().set("targets", &m_cavemen);
 
 		// respawn function uses a func ptr to a lambda
-		auto myFunc = new std::function<void(Entity*)>();
+		auto myFunc = new std::function<void(ai::Entity*)>();
 
-		*myFunc = [this](Entity* entity) {
+		*myFunc = [this](ai::Entity* entity) {
 			entity->getBlackboard().set("health", 100.f);
 			auto n = m_pathNodes[rand() % m_pathNodes.size()];
-			entity->setPosition(n->x, n->y);
+			entity->setPosition(n->position);
 
-			std::list<Pathfinding::Node*>* path = nullptr;
+			std::list<graph::Node*>* path = nullptr;
 			if (entity->getBlackboard().get("path", &path))
 				path->clear();
-			Vector2* velocity = nullptr;
+			glm::vec3* velocity = nullptr;
 			if (entity->getBlackboard().get("velocity", &velocity)) {
-				velocity->x = velocity->y = 0;
+				velocity->x = velocity->y = velocity->z = 0;
 			}
 
 			++m_knightDeaths;
@@ -234,11 +231,11 @@ bool AIShowcaseApp::startup() {
 		int index;
 		do {
 			index = rand() % (m_map->getWidth() * m_map->getHeight());
-			caveman.setPosition(8 + 16.0f * (index % m_map->getWidth()), 8 + 16.0f * (index / m_map->getWidth()));
+			caveman.setPosition({ 8 + 16.0f * (index % m_map->getWidth()), 8 + 16.0f * (index / m_map->getWidth()),0 });
 		} while (m_tiles[index] != -1);
 
-		caveman.getBlackboard().set("velocity", new Vector2({ 0 }), true);
-		caveman.getBlackboard().set("wanderData", new WanderData({100,75,25,0,0}), true);
+		caveman.getBlackboard().set("velocity", new glm::vec3(0), true);
+		caveman.getBlackboard().set("wanderData", new ai::WanderData({ 100,75,25,{0,0,0},{1,1,0} }), true);
 		caveman.getBlackboard().set("maxForce", 100.f);
 		caveman.getBlackboard().set("maxVelocity", 40.f);
 		caveman.getBlackboard().set("maxHealth", 100.f);
@@ -251,18 +248,18 @@ bool AIShowcaseApp::startup() {
 		caveman.getBlackboard().set("type", CAVEMAN);
 		caveman.getBlackboard().set("targets", &m_knights);
 
-		caveman.getBlackboard().set("respawnFunction", new std::function<void(Entity*)>(
-			[this](Entity* entity) {
+		caveman.getBlackboard().set("respawnFunction", new std::function<void(ai::Entity*)>(
+			[this](ai::Entity* entity) {
 			entity->getBlackboard().set("health", 100.f);
 			
 			int i;
 			do {
 				i = rand() % (m_map->getWidth() * m_map->getHeight());
-				entity->setPosition(8 + 16.0f * (i % m_map->getWidth()), 8 + 16.0f * (i / m_map->getWidth()));
+				entity->setPosition({ 8 + 16.0f * (i % m_map->getWidth()), 8 + 16.0f * (i / m_map->getWidth()),0 });
 			} while (m_tiles[i] != -1);
-			Vector2* velocity = nullptr;
+			glm::vec3* velocity = nullptr;
 			if (entity->getBlackboard().get("velocity", &velocity)) {
-				velocity->x = velocity->y = 0;
+				velocity->x = velocity->y = velocity->z = 0;
 			}
 
 			++m_cavemanDeaths;
@@ -291,22 +288,22 @@ void AIShowcaseApp::shutdown() {
 	delete m_2dRenderer;
 }
 
-void AIShowcaseApp::update(float deltaTime) {
+void AIShowcaseApp::update() {
 
 	for (auto& knight : m_knights)
-		knight.executeBehaviours(deltaTime);
+		knight.executeBehaviours();
 	for (auto& caveman : m_cavemen)
-		caveman.executeBehaviours(deltaTime);
+		caveman.executeBehaviours();
 		
 	// input example
-	Input* input = Input::getInstance();
+	app::Input* input = app::Input::getInstance();
 
 	// exit the application
-	if (input->isKeyDown(INPUT_KEY_ESCAPE))
+	if (input->isKeyDown(app::INPUT_KEY_ESCAPE))
 		quit();
 
 	// toggle debug rendering
-	if (input->wasKeyPressed(INPUT_KEY_D))
+	if (input->wasKeyPressed(app::INPUT_KEY_D))
 		m_drawGizmos = !m_drawGizmos;
 }
 
@@ -323,7 +320,6 @@ void AIShowcaseApp::draw() {
 	float ph = 1.0f / m_spriteSheet->getHeight();
 	float w = pw * 16.0f;
 	float h = ph * 16.0f;
-	float x, y, tx, ty;
 
 	// draw the sprites
 	m_2dRenderer->setRenderColour(1, 1, 1);
@@ -344,12 +340,12 @@ void AIShowcaseApp::draw() {
 	if (m_drawGizmos) {
 		m_2dRenderer->setRenderColour(1, 0, 0);
 		for (auto node : m_pathNodes) {
-			m_2dRenderer->drawBox(node->x, node->y, 4, 4);
+			m_2dRenderer->drawBox(node->position.x, node->position.y, 4, 4);
 
 			for (auto edge : node->edges) {
 				MyNode* target = (MyNode*)edge->target;
 
-				m_2dRenderer->drawLine(node->x, node->y, target->x, target->y);
+				m_2dRenderer->drawLine(node->position.x, node->position.y, target->position.x, target->position.y);
 			}
 		}
 	}
@@ -362,23 +358,23 @@ void AIShowcaseApp::draw() {
 
 	float health, maxHealth;
 
-	Entity* target = nullptr;
+	ai::Entity* target = nullptr;
 
 	m_2dRenderer->setUVRect(0, 1 - h, w, h);
 	for (auto& knight : m_knights) {
-		knight.getPosition(&x, &y);
+		auto position = knight.getPosition();
 		m_2dRenderer->setRenderColour(1, 1, 1);
-		m_2dRenderer->drawSprite(m_characterSprites, x, y, 16, 16);
+		m_2dRenderer->drawSprite(m_characterSprites, position.x, position.y, 16, 16);
 
 		// draw health
 		knight.getBlackboard().get("health", health);
 		knight.getBlackboard().get("maxHealth", maxHealth);
 
 		m_2dRenderer->setRenderColour(0, 1, 0);
-		m_2dRenderer->drawBox(x, y + 12, 16 * (health / maxHealth), 2);
+		m_2dRenderer->drawBox(position.x, position.y + 12, 16 * (health / maxHealth), 2);
 	}
 
-	Vector2* v = nullptr;
+	glm::vec3* v = nullptr;
 	float s = sinf(3.14159f*0.15f);
 	float c = cosf(3.14159f*0.15f);
 	float s2 = sinf(3.14159f*-0.15f);
@@ -386,16 +382,16 @@ void AIShowcaseApp::draw() {
 
 	m_2dRenderer->setUVRect(0, h * 6 + ph * 6, w, h);
 	for (auto& caveman : m_cavemen) {
-		caveman.getPosition(&x, &y);
+		auto position = caveman.getPosition();
 		m_2dRenderer->setRenderColour(1, 1, 1);
-		m_2dRenderer->drawSprite(m_characterSprites, x, y, 16, 16);
+		m_2dRenderer->drawSprite(m_characterSprites, position.x, position.y, 16, 16);
 
 		// draw health
 		caveman.getBlackboard().get("health", health);
 		caveman.getBlackboard().get("maxHealth", maxHealth);
 
 		m_2dRenderer->setRenderColour(0, 1, 0);
-		m_2dRenderer->drawBox(x, y + 12, 16 * (health / maxHealth), 2);
+		m_2dRenderer->drawBox(position.x, position.y + 12, 16 * (health / maxHealth), 2);
 
 		// draw feelers
 		if (m_drawGizmos) {
@@ -411,10 +407,10 @@ void AIShowcaseApp::draw() {
 					vx /= magSqr;
 					vy /= magSqr;
 
-					m_2dRenderer->drawLine(x, y, x + vx * 40, y + vy * 40);
+					m_2dRenderer->drawLine(position.x, position.y, position.x + vx * 40, position.y + vy * 40);
 
-					m_2dRenderer->drawLine(x, y, x + (vx * c - vy * s) * 40 * 0.5f, y + (vx * s + vy * c) * 40 * 0.5f);
-					m_2dRenderer->drawLine(x, y, x + (vx * c2 - vy * s2) * 40 * 0.5f, y + (vx * s2 + vy * c2) * 40 * 0.5f);
+					m_2dRenderer->drawLine(position.x, position.y, position.x + (vx * c - vy * s) * 40 * 0.5f, position.y + (vx * s + vy * c) * 40 * 0.5f);
+					m_2dRenderer->drawLine(position.x, position.y, position.x + (vx * c2 - vy * s2) * 40 * 0.5f, position.y + (vx * s2 + vy * c2) * 40 * 0.5f);
 				}
 			}
 		}
@@ -560,54 +556,47 @@ int getDirtSprite(unsigned char spriteId) {
 	}
 }
 
-eBehaviourResult FollowPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult FollowPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Pathfinding::Node*>* path = nullptr;
+	std::list<graph::Node*>* path = nullptr;
 	if (entity->getBlackboard().get("path", &path) == false ||
 		path->empty())
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
 	float speed = 0;
 	entity->getBlackboard().get("speed", speed);
 
-	float x = 0, y = 0;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// access first node we're heading towards
 	MyNode* first = (MyNode*)path->front();
 
 	// distance to first
-	float xDiff = first->x - x;
-	float yDiff = first->y - y;
-
-	float distance = xDiff * xDiff + yDiff * yDiff;
-
+	auto diff = first->position - position;
+	
 	// if not at the target then move towards it
-	if (distance > 25) {
-
-		distance = sqrt(distance);
-		xDiff /= distance;
-		yDiff /= distance;
+	if (glm::dot(diff, diff) > 25) {
 
 		// move to target (can overshoot!)
-		entity->translate(xDiff * speed * deltaTime, yDiff * speed * deltaTime);
+		entity->translate(glm::normalize(diff) * speed * app::Time::deltaTime());
 	}
 	else {
 		// at the node, remove it and move to the next
 		path->pop_front();
 	}
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }
 
-MyNode* NewPathBehaviour::findClosest(float x, float y) {
+MyNode* NewPathBehaviour::findClosest(const glm::vec3& p) {
 
 	MyNode* closest = nullptr;
-	float closestDist = 2000 * 2000;
+	float closestDist = FLT_MAX;
 
 	for (auto node : m_nodes) {
 
-		float dist = (node->x - x) * (node->x - x) + (node->y - y) * (node->y - y);
+		auto diff = node->position - p;
+		float dist = glm::dot(diff, diff);
 
 		if (dist < closestDist) {
 			closest = node;
@@ -618,115 +607,112 @@ MyNode* NewPathBehaviour::findClosest(float x, float y) {
 	return closest;
 }
 
-eBehaviourResult NewPathBehaviour::execute(Entity* entity, float deltaTime) {
+ai::eBehaviourResult NewPathBehaviour::execute(ai::Entity* entity) {
 
 	// access data from the game object
-	std::list<Pathfinding::Node*>* path = nullptr;
+	std::list<graph::Node*>* path = nullptr;
 	if (entity->getBlackboard().get("path", &path) == false)
-		return eBehaviourResult::FAILURE;
+		return ai::eBehaviourResult::FAILURE;
 
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
 	// random end node
 	bool found = false;
 	do {
 
-		auto start = findClosest(x, y);
+		auto start = findClosest(position);
 		auto end = m_nodes[rand() % m_nodes.size()];
 
-		found = Pathfinding::Search::aStar(start, end, *path, MyNode::heuristic);
+		found = graph::Search::aStar(start, end, *path, MyNode::heuristic);
 
 	} while (found == false);
 
-	return eBehaviourResult::SUCCESS;
+	return ai::eBehaviourResult::SUCCESS;
 }
 
-Force WaterAvoidanceForce::getForce(Entity* entity) const {
+glm::vec3 WaterAvoidanceForce::getForce(ai::Entity* entity) const {
 
-	Force force = { 0, 0 };
+	glm::vec3 force = { 0, 0, 0 };
 
-	float x, y;
-	entity->getPosition(&x, &y);
+	auto position = entity->getPosition();
 
-	Vector2* velocity = nullptr;
+	glm::vec3* velocity = nullptr;
 	if (entity->getBlackboard().get("velocity", &velocity) == false)
 		return force;
-	
+		
 	// are we moving?
-	float mag = velocity->x * velocity->x + velocity->y * velocity->y;
+	float mag = glm::dot(*velocity, *velocity);
 	if (mag > 0) {
 
 		mag = sqrt(mag);
 
-		float velX = velocity->x / mag * m_feelerLength;
-		float velY = velocity->y / mag * m_feelerLength;
+		auto vel = *velocity / mag * m_feelerLength;
 
 		// find which cell we're in
-		unsigned int cellX = unsigned int(x / m_tileWidth);
-		unsigned int cellY = unsigned int(y / m_tileHeight);
+		unsigned int cellX = unsigned int(position.x / m_tileWidth);
+		unsigned int cellY = unsigned int(position.y / m_tileHeight);
 
 		const unsigned char* pixels = m_map->getPixels();
 
 		// test the 8 boxes
 		if (cellX > 0 &&
 			getPixelColour3(3 * (cellY * m_map->getWidth() + cellX - 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX - 1) * m_tileWidth,
-						   cellY * m_tileHeight,
+			collideWithBox(position, vel,
+				{(cellX - 1) * m_tileWidth,
+						   cellY * m_tileHeight,0 },
 						   force);
 		}
 		if (cellY > 0 &&
 			getPixelColour3(3 * ((cellY - 1) * m_map->getWidth() + cellX), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   cellX * m_tileWidth,
-						   (cellY - 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{ cellX * m_tileWidth,
+						   (cellY - 1) * m_tileHeight,0 },
 						   force);
 		}
 		if (cellX > 0 &&
 			cellY > 0 &&
 			getPixelColour3(3 * ((cellY - 1) * m_map->getWidth() + cellX - 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX - 1) * m_tileWidth,
-						   (cellY - 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{ (cellX - 1) * m_tileWidth,
+						   (cellY - 1) * m_tileHeight,0 },
 						   force);
 		}
 		if (cellX < (m_map->getWidth() - 1) &&
 			getPixelColour3(3 * (cellY * m_map->getWidth() + cellX + 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX + 1) * m_tileWidth,
-						   cellY * m_tileHeight,
+			collideWithBox(position, vel,
+				{  (cellX + 1) * m_tileWidth,
+						   cellY * m_tileHeight,0 },
 						   force);
 		}
 		if (cellY < (m_map->getHeight() - 1) &&
 			getPixelColour3(3 * ((cellY + 1) * m_map->getWidth() + cellX), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   cellX * m_tileWidth,
-						   (cellY + 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{  cellX * m_tileWidth,
+						   (cellY + 1) * m_tileHeight,0 },
 						   force);
 		}
 		if (cellX < (m_map->getWidth() - 1) &&
 			cellY < (m_map->getHeight() - 1) &&
 			getPixelColour3(3 * ((cellY + 1) * m_map->getWidth() + cellX + 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX - 1) * m_tileWidth,
-						   (cellY + 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{   (cellX - 1) * m_tileWidth,
+						   (cellY + 1) * m_tileHeight,0 },
 						   force);
 		}
 		if (cellX > 0 &&
 			cellY < (m_map->getHeight() - 1) &&
 			getPixelColour3(3 * ((cellY + 1) * m_map->getWidth() + cellX - 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX - 1) * m_tileWidth,
-						   (cellY + 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{  (cellX - 1) * m_tileWidth,
+						   (cellY + 1) * m_tileHeight,0 },
 						   force);
 		}
 		if (cellX < (m_map->getWidth() - 1) &&
 			cellY > 0 &&
 			getPixelColour3(3 * ((cellY - 1) * m_map->getWidth() + cellX + 1), pixels) == 0x000000ff) {
-			collideWithBox(x, y, velX, velY,
-						   (cellX + 1) * m_tileWidth,
-						   (cellY - 1) * m_tileHeight,
+			collideWithBox(position, vel,
+				{ (cellX + 1) * m_tileWidth,
+						   (cellY - 1) * m_tileHeight, 0 },
 						   force);
 		}
 	}
@@ -734,83 +720,62 @@ Force WaterAvoidanceForce::getForce(Entity* entity) const {
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return { force.x * maxForce, force.y * maxForce };
+	return force * maxForce;
 }
 
-void WaterAvoidanceForce::collideWithBox(float x, float y, float vx, float vy, 
-										 float boxX, float boxY,
-										 Force& force) const {
+void WaterAvoidanceForce::collideWithBox(const glm::vec3& p, const glm::vec3& v,
+										const glm::vec3& center,
+										 glm::vec3& force) const {
 
-	float nx = 0, ny = 0;
-	if (rayBoxIntersection(x, y,
-						   vx, vy,
-						   boxX, boxY, m_tileWidth, m_tileHeight,
-						   nx, ny)) {
-		force.x += nx;
-		force.y += ny;
+	glm::vec3 n(0);
+	if (intersection::rayBoxIntersection(p,
+						   v,
+		center, { m_tileWidth, m_tileHeight,0 },
+						   n)) {
+		force += n;
 	}
 
 	// rotate feeler about 30 degrees
 	float s = sinf(3.14159f*0.15f);
 	float c = cosf(3.14159f*0.15f);
-	if (rayBoxIntersection(x, y,
-						   (vx * c - vy * s) * 0.5f,
-						   (vx * s + vy * c) * 0.5f,
-						   boxX, boxY, m_tileWidth, m_tileHeight,
-						   nx, ny)) {
-		force.x += nx;
-		force.y += ny;
+	if (intersection::rayBoxIntersection(p,
+		{ (v.x * c - v.y * s) * 0.5f,
+						   (v.x * s + v.y * c) * 0.5f,0 },
+		center, { m_tileWidth, m_tileHeight,0 },
+						   n)) {
+		force += n;
 	}
 
 	// rotate feeler about -30 degrees
 	s = sinf(3.14159f*-0.15f);
 	c = cosf(3.14159f*-0.15f);
-	if (rayBoxIntersection(x, y,
-						   (vx * c - vy * s) * 0.5f,
-						   (vx * s + vy * c) * 0.5f,
-						   boxX, boxY, m_tileWidth, m_tileHeight,
-						   nx, ny)) {
-		force.x += nx;
-		force.y += ny;
+	if (intersection::rayBoxIntersection(p,
+		{ (v.x * c - v.y * s) * 0.5f,
+						   (v.x * s + v.y * c) * 0.5f,0 },
+		center, { m_tileWidth, m_tileHeight,0 },
+						   n)) {
+		force += n;
 	}
 }
 
-Force SeekClosestForce::getForce(Entity* entity) const {
+glm::vec3 SeekClosestForce::getForce(ai::Entity* entity) const {
 
-	float xDiff = 0;
-	float yDiff = 0;
+	glm::vec3 diff(0);
 
-	Entity* target = nullptr;
+	ai::Entity* target = nullptr;
 	if (entity->getBlackboard().get("target", &target) &&
 		target != nullptr) {
-
-		// get target position
-		float targetX = 0, targetY = 0;
-		target->getPosition(&targetX, &targetY);
-
-		// get my position
-		float x = 0, y = 0;
-		entity->getPosition(&x, &y);
-
+		
 		// get a vector to the target from "us"
-		xDiff = targetX - x;
-		yDiff = targetY - y;
-		float distance = (xDiff * xDiff + yDiff * yDiff);
+		diff = target->getPosition() - entity->getPosition();
 
 		// if not at the target then move towards them
-		if (distance > 0) {
-
-			distance = sqrt(distance);
-
-			// need to make the difference the length of 1
-			// this is so movement can be "pixels per second"
-			xDiff /= distance;
-			yDiff /= distance;
-		}
+		if (glm::dot(diff, diff) > 0) 
+			diff = glm::normalize(diff);
 	}
 
 	float maxForce = 0;
 	entity->getBlackboard().get("maxForce", maxForce);
 
-	return{ xDiff * maxForce, yDiff * maxForce };
+	return diff * maxForce;
 }

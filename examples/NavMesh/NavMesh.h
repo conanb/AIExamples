@@ -10,7 +10,9 @@ namespace p2t {
 	struct Point;
 }
 
-class Entity;
+namespace ai {
+	class Entity;
+}
 
 class NavMesh {
 public:
@@ -43,7 +45,7 @@ public:
 
 	// access random node or closest node to a coordinate
 	NavMesh::Node* getRandomNode() const;
-	NavMesh::Node* findClosest(float x, float y) const;
+	NavMesh::Node* findClosest(const glm::vec3& p) const;
 
 	// access osbatcles
 	unsigned int getObstacleCount() const { return m_obstacles.size(); }
@@ -55,7 +57,7 @@ public:
 	class Node : public graph::Node {
 	public:
 
-		Node() {}
+		Node() : position(0,0,0) {}
 		virtual ~Node() {}
 
 		glm::vec3 position;
@@ -96,7 +98,7 @@ public:
 		FollowPathBehaviour() {}
 		virtual ~FollowPathBehaviour() {}
 
-		virtual ai::eBehaviourResult execute(Entity* entity);
+		virtual ai::eBehaviourResult execute(ai::Entity* entity);
 	};
 
 	// a behaviour that finds a new path and smooths it
@@ -106,7 +108,7 @@ public:
 		NewPathBehaviour(NavMesh* navMesh) : m_navMesh(navMesh) {}
 		virtual ~NewPathBehaviour() {}
 
-		virtual ai::eBehaviourResult execute(Entity* entity);
+		virtual ai::eBehaviourResult execute(ai::Entity* entity);
 
 	protected:
 
@@ -116,23 +118,23 @@ public:
 protected:
 
 	// funneling algorithm from (http://digestingduck.blogspot.com.au/2010/03/simple-stupid-funnel-algorithm.html)
-	inline static float triarea2(const Vector2& a, const Vector2& b, const Vector2& c) {
+	inline static float triarea2(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) {
 		const float ax = b.x - a.x;
 		const float ay = b.y - a.y;
 		const float bx = c.x - a.x;
 		const float by = c.y - a.y;
 		return bx*ay - ax*by;
 	}
-	inline static float vdistsqr(const Vector2& a, const Vector2& b) {
+	inline static float vdistsqr(const glm::vec3& a, const glm::vec3& b) {
 		float dx = a.x - b.x;
 		float dy = a.y - b.y;
 		return (dx*dx) + (dy*dy);
 	}
-	inline static bool vequal(const Vector2& a, const Vector2& b) {
+	inline static bool vequal(const glm::vec3& a, const glm::vec3& b) {
 		static const float eq = 0.001f*0.001f;
 		return vdistsqr(a, b) < eq;
 	}
-	static int stringPull(const Vector2* portals, int portalCount, Vector2* points, const int maxPoints);
+	static int stringPull(const glm::vec3* portals, int portalCount, glm::vec3* points, const int maxPoints);
 
 	std::vector<Obstacle> m_obstacles;
 	std::vector<NavMesh::Node*> m_nodes;
