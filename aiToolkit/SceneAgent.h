@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Entity.h"
+#include "Agent.h"
 #include <vector>
 #include <cassert>
 
@@ -11,11 +11,11 @@ namespace app {
 
 namespace ai {
 
-	class SceneEntity : public Entity {
+	class SceneAgent : public Agent {
 	public:
 
-		SceneEntity() {}
-		virtual ~SceneEntity() {
+		SceneAgent() {}
+		virtual ~SceneAgent() {
 			// detach from parent
 			if (m_parent != nullptr)
 				m_parent->removeChild(this);
@@ -25,13 +25,13 @@ namespace ai {
 				child->m_parent = nullptr;
 		}
 
-		SceneEntity* getParent() const { return m_parent; }
+		SceneAgent* getParent() const { return m_parent; }
 
 		size_t childCount() const { return m_children.size(); }
 
-		SceneEntity* getChild(unsigned int index) const { return m_children[index]; }
+		SceneAgent* getChild(unsigned int index) const { return m_children[index]; }
 
-		void addChild(SceneEntity* child) {
+		void addChild(SceneAgent* child) {
 			// make sure it doesn't have a parent already
 			assert(child->m_parent == nullptr);
 			// assign this as parent
@@ -43,7 +43,7 @@ namespace ai {
 			child->updateTransform();
 		}
 
-		void removeChild(SceneEntity* child) {
+		void removeChild(SceneAgent* child) {
 			// find the child in the collection
 			auto iter = std::find(m_children.begin(), m_children.end(), child);
 
@@ -60,7 +60,7 @@ namespace ai {
 
 		virtual void executeBehaviours() {
 			// run behaviours
-			Entity::executeBehaviours();
+			Agent::executeBehaviours();
 
 			// update children
 			for (auto child : m_children)
@@ -103,18 +103,18 @@ namespace ai {
 
 	protected:
 
-		SceneEntity* m_parent = nullptr;
-		std::vector<SceneEntity*> m_children;
+		SceneAgent* m_parent = nullptr;
+		std::vector<SceneAgent*> m_children;
 
 		glm::mat4 m_globalTransform = glm::mat4(1);
 	};
 
-	class SpriteEntity : public SceneEntity {
+	class SpriteAgent : public SceneAgent {
 	public:
 
-		SpriteEntity() {}
-		SpriteEntity(const char* filename) { load(filename); }
-		virtual ~SpriteEntity();
+		SpriteAgent() {}
+		SpriteAgent(const char* filename) { load(filename); }
+		virtual ~SpriteAgent();
 
 		bool load(const char* filename);
 

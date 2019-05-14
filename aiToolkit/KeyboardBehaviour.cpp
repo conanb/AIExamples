@@ -12,7 +12,7 @@ KeyboardBehaviour::~KeyboardBehaviour() {
 
 }
 
-eBehaviourResult KeyboardBehaviour::execute(Entity* entity) {
+eBehaviourResult KeyboardBehaviour::execute(Agent* entity) {
 
 	float x = 0, y = 0;
 

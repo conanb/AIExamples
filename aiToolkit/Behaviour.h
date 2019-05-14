@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Entity.h"
+#include "Agent.h"
 
 namespace ai {
 
@@ -18,7 +18,7 @@ public:
 	virtual ~Behaviour() {}
 
 	// pure virtual function for executing the behaviour
-	virtual eBehaviourResult execute(Entity* entity) = 0;
+	virtual eBehaviourResult execute(Agent* entity) = 0;
 
 };
 

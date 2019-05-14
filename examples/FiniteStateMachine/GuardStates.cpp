@@ -1,7 +1,7 @@
 #include "GuardStates.h"
 #include "Timing.h"
 
-void AttackState::update(ai::Entity* entity) {
+void AttackState::update(ai::Agent* entity) {
 
 	if (m_target == nullptr)
 		return;
@@ -23,7 +23,7 @@ void AttackState::update(ai::Entity* entity) {
 	}
 }
 
-void PatrolState::update(ai::Entity* entity) {
+void PatrolState::update(ai::Agent* entity) {
 
 	if (m_locations.empty())
 		return;

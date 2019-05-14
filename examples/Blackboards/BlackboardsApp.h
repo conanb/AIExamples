@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-#include "Entity.h"
+#include "Agent.h"
 #include "SteeringBehaviour.h"
 
 enum eEntityClass : int {
@@ -24,7 +24,7 @@ public:
 	BlackboardBoolCondition(const char* entry) : m_entry(entry) {}
 	virtual ~BlackboardBoolCondition() {}
 
-	virtual bool test(ai::Entity* entity) const {
+	virtual bool test(ai::Agent* entity) const {
 		bool value = false;
 		entity->getBlackboard().get(m_entry, value);
 		return value;
@@ -42,7 +42,7 @@ public:
 	BlackboardHasEntryCondition(const char* entry) : m_entry(entry) {}
 	virtual ~BlackboardHasEntryCondition() {}
 
-	virtual bool test(ai::Entity* entity) const {
+	virtual bool test(ai::Agent* entity) const {
 		return entity->getBlackboard().contains(m_entry);
 	}
 
@@ -58,11 +58,11 @@ public:
 	NeedHelpQuestion(int type) : BlackboardQuestion(type) {}
 	virtual ~NeedHelpQuestion() {}
 
-	ai::Entity* needsHelp;
+	ai::Agent* needsHelp;
 };
 
 // a game object that is also a blackboard expert
-class MyEntity : public ai::Entity, public ai::BlackboardExpert {
+class MyEntity : public ai::Agent, public ai::BlackboardExpert {
 public:
 
 	MyEntity() {}
@@ -79,7 +79,7 @@ public:
 
 	IdleState() {}
 	virtual ~IdleState() {}
-	virtual void	update(ai::Entity* entity) {}
+	virtual void	update(ai::Agent* entity) {}
 };
 
 // game object moves towards its target
@@ -89,7 +89,7 @@ public:
 
 	HelpEntityState() {}
 	virtual ~HelpEntityState() {}
-	virtual void	update(ai::Entity* entity);
+	virtual void	update(ai::Agent* entity);
 };
 
 // behaviour that responds to questions this entity can answer
@@ -99,7 +99,7 @@ public:
 	BlackboardRespondBehaviour(ai::Blackboard* blackboard) : m_blackboard(blackboard) {}
 	virtual ~BlackboardRespondBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity);
+	virtual ai::eBehaviourResult execute(ai::Agent* entity);
 
 protected:
 

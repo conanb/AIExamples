@@ -4,7 +4,7 @@
 
 namespace ai {
 
-eBehaviourResult TimeoutDecorator::execute(Entity* entity) {
+eBehaviourResult TimeoutDecorator::execute(Agent* entity) {
 
 	float currTime = app::Time::now();
 

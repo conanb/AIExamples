@@ -8,11 +8,11 @@ namespace ai {
 
 class Behaviour;
 
-class Entity {
+class Agent {
 public:
 
-	Entity() : m_transform(1) {}
-	virtual ~Entity() {}
+	Agent() : m_transform(1) {}
+	virtual ~Agent() {}
 
 	// add a behaviour
 	void addBehaviour(Behaviour* behaviour);

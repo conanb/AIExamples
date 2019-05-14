@@ -11,7 +11,7 @@ namespace p2t {
 }
 
 namespace ai {
-	class Entity;
+	class Agent;
 }
 
 class NavMesh {
@@ -36,11 +36,11 @@ public:
 	// treat them as NavMesh::Node's and smooth the path using a
 	// funneling algorithm from (http://digestingduck.blogspot.com.au/2010/03/simple-stupid-funnel-algorithm.html)
 	// we must build a list of portals first
-	static int smoothPath(const std::list<graph::Node*>& path, std::list<glm::vec3>& smoothPath);
+	static size_t smoothPath(const std::list<graph::Node*>& path, std::list<glm::vec3>& smoothPath);
 
 	// access nodes
 	class Node;
-	unsigned int getNodeCount() const { return m_nodes.size(); }
+	size_t getNodeCount() const { return m_nodes.size(); }
 	const std::vector<NavMesh::Node*>& getNodes() const { return m_nodes; }
 
 	// access random node or closest node to a coordinate
@@ -48,7 +48,7 @@ public:
 	NavMesh::Node* findClosest(const glm::vec3& p) const;
 
 	// access osbatcles
-	unsigned int getObstacleCount() const { return m_obstacles.size(); }
+	size_t getObstacleCount() const { return m_obstacles.size(); }
 	const std::vector<Obstacle>& getObstacles() const { return m_obstacles; }
 
 public:
@@ -98,7 +98,7 @@ public:
 		FollowPathBehaviour() {}
 		virtual ~FollowPathBehaviour() {}
 
-		virtual ai::eBehaviourResult execute(ai::Entity* entity);
+		virtual ai::eBehaviourResult execute(ai::Agent* entity);
 	};
 
 	// a behaviour that finds a new path and smooths it
@@ -108,7 +108,7 @@ public:
 		NewPathBehaviour(NavMesh* navMesh) : m_navMesh(navMesh) {}
 		virtual ~NewPathBehaviour() {}
 
-		virtual ai::eBehaviourResult execute(ai::Entity* entity);
+		virtual ai::eBehaviourResult execute(ai::Agent* entity);
 
 	protected:
 

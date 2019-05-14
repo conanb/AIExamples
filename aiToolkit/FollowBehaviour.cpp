@@ -12,7 +12,7 @@ FollowBehaviour::~FollowBehaviour() {
 
 }
 
-eBehaviourResult FollowBehaviour::execute(Entity* entity) {
+eBehaviourResult FollowBehaviour::execute(Agent* entity) {
 
 	if (m_target == nullptr)
 		return eBehaviourResult::FAILURE;

@@ -232,7 +232,7 @@ void PathfindingApp::draw() {
 	m_2dRenderer->end();
 }
 
-ai::eBehaviourResult FollowPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult FollowPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<graph::Node*>* path = nullptr;
@@ -283,7 +283,7 @@ MyNode* findClosest(float x, float y, std::vector<MyNode*>& nodes) {
 	return closest;
 }
 
-ai::eBehaviourResult NewPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult NewPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<graph::Node*>* path = nullptr;

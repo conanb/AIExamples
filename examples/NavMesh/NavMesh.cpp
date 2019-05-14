@@ -1,5 +1,5 @@
 #include "NavMesh.h"
-#include "Entity.h"
+#include "Agent.h"
 #include "Timing.h"
 #include "poly2tri/poly2tri.h"
 
@@ -119,7 +119,7 @@ void NavMesh::build() {
 	m_cdt = nullptr;
 }
 
-ai::eBehaviourResult NavMesh::FollowPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult NavMesh::FollowPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<glm::vec3>* smoothPath = nullptr;
@@ -151,7 +151,7 @@ ai::eBehaviourResult NavMesh::FollowPathBehaviour::execute(ai::Entity* entity) {
 	return ai::eBehaviourResult::SUCCESS;
 }
 
-ai::eBehaviourResult NavMesh::NewPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult NavMesh::NewPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<graph::Node*>* path = nullptr;
@@ -271,7 +271,7 @@ int NavMesh::stringPull(const glm::vec3* portals, int portalCount,
 	return npts;
 }
 
-int NavMesh::smoothPath(const std::list<graph::Node*>& path,
+size_t NavMesh::smoothPath(const std::list<graph::Node*>& path,
 						std::list<glm::vec3>& smoothPath) {
 
 	if (path.size() == 0)

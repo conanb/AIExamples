@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 #include "Random.h"
-#include "Entity.h"
+#include "Agent.h"
 #include "SteeringBehaviour.h"
 
 class FlockingApp : public app::Application {
@@ -23,7 +23,7 @@ protected:
 	app::Renderer2D*	m_2dRenderer;
 	app::Font*			m_font;
 
-	std::vector<ai::Entity>	m_entities;
+	std::vector<ai::Agent>	m_entities;
 
 	ai::SteeringBehaviour	m_steeringBehaviour;
 

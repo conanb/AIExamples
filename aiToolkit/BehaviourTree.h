@@ -2,6 +2,9 @@
 
 #include "Behaviour.h"
 #include <iostream>
+#include <algorithm>
+#include <thread>
+#include <Semaphore.h>
 
 namespace ai {
 
@@ -30,7 +33,7 @@ public:
 	SequenceBehaviour() {}
 	virtual ~SequenceBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 
 		auto iter = m_runningBehaviour;
 
@@ -64,7 +67,7 @@ public:
 	SelectorBehaviour() {}
 	virtual ~SelectorBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 
 		auto iter = m_runningBehaviour;
 
@@ -99,7 +102,7 @@ public:
 
 	void setIndex(unsigned int index) { m_index = index; }
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 		if (m_index < 0 ||
 			m_index >= m_children.size())
 			return eBehaviourResult::FAILURE;
@@ -118,12 +121,9 @@ public:
 	RandomBehaviour() {}
 	virtual ~RandomBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity) {
-
-		if (m_children.empty())
-			return eBehaviourResult::FAILURE;
-
-		return m_children[rand() % m_children.size()]->execute(entity);
+	virtual eBehaviourResult execute(Agent* entity) {
+		std::random_shuffle(m_children.begin(), m_children.end());
+		return m_children[0]->execute(entity);
 	}
 };
 
@@ -133,21 +133,21 @@ public:
 	RandomSelectorBehaviour() {}
 	virtual ~RandomSelectorBehaviour() {}
 
-	virtual eBehaviourResult execute(Entity* entity) {
-
-		// Shuffle all child nodes!
-		std::vector<Behaviour*> newList;
-		while (m_children.empty() == false) {
-
-			// randomly pick one out of the old list
-			// remove it from old list
-			// put in new list
-		}
-
-		m_children = newList;
-
-		// once shuffled, run as a normal selector
+	virtual eBehaviourResult execute(Agent* entity) {
+		std::random_shuffle(m_children.begin(), m_children.end());
 		return SelectorBehaviour::execute(entity);
+	}
+};
+
+class RandomSequenceBehaviour : public SequenceBehaviour {
+public:
+
+	RandomSequenceBehaviour() {}
+	virtual ~RandomSequenceBehaviour() {}
+
+	virtual eBehaviourResult execute(Agent* entity) {
+		std::random_shuffle(m_children.begin(), m_children.end());
+		return SequenceBehaviour::execute(entity);
 	}
 };
 
@@ -159,7 +159,7 @@ public:
 
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 
 		if (m_child != nullptr) {
 
@@ -188,7 +188,7 @@ public:
 	void setChild(Behaviour* child) { m_child = child; }
 	void setMessage(const char* msg) { m_message = msg; }
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 		if (m_child != nullptr) {
 
 			std::cout << m_message << std::endl;
@@ -213,7 +213,7 @@ public:
 	void setLimit(int limit) { m_count = limit; }
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 		if (m_child != nullptr &&
 			m_count > 0) {
 
@@ -230,6 +230,57 @@ protected:
 	Behaviour*	m_child;
 };
 
+class UntilFailDecorator : public Behaviour {
+public:
+
+	UntilFailDecorator(Behaviour* child) : m_child(child) {}
+	virtual ~UntilFailDecorator() {}
+
+	void setChild(Behaviour* child) { m_child = child; }
+
+	virtual eBehaviourResult execute(Agent* entity) {
+		if (m_child != nullptr) {
+
+			while (true) {
+				if (!m_child->execute(entity))
+					break;
+			}
+			return eBehaviourResult::SUCCESS;
+		}
+		return eBehaviourResult::FAILURE;
+	}
+
+protected:
+
+	Behaviour*	m_child;
+};
+
+class RepeatUntilFailDecorator : public Behaviour {
+public:
+
+	RepeatUntilFailDecorator(Behaviour* child) : m_child(child) {}
+	virtual ~RepeatUntilFailDecorator() {}
+
+	void setChild(Behaviour* child) { m_child = child; }
+
+	virtual eBehaviourResult execute(Agent* entity) {
+		if (m_child != nullptr) {
+			if (!m_child->execute(entity)) {
+				m_failed = true;
+				return eBehaviourResult::SUCCESS;
+			}
+			else
+				return eBehaviourResult::RUNNING;
+		}
+		return eBehaviourResult::FAILURE;
+	}
+
+protected:
+
+	bool m_failed = false;
+	Behaviour * m_child;
+};
+
 class TimeoutDecorator : public Behaviour {
 public:
 
@@ -239,12 +290,34 @@ public:
 	void setCooldown(float cooldown) { m_cooldown = cooldown; }
 	void setChild(Behaviour* child) { m_child = child; }
 
-	virtual eBehaviourResult execute(Entity* entity);
+	virtual eBehaviourResult execute(Agent* entity);
 
 protected:
 
 	float		m_lastTime = -1;
 	float		m_cooldown;
+	Behaviour*	m_child;
+};
+
+class SemaphoreGuard : public Behaviour {
+public:
+
+	SemaphoreGuard(Behaviour* child, app::Semaphore* semaphore) : m_child(child), m_semaphore(semaphore) {}
+	virtual ~SemaphoreGuard() {}
+
+	virtual eBehaviourResult execute(Agent* entity) {
+		if (m_semaphore->acquire()) {
+			auto result = m_child->execute(entity);
+			m_semaphore->release();
+			return result;
+		}
+		else
+			return eBehaviourResult::FAILURE;
+	}
+
+protected:
+
+	app::Semaphore* m_semaphore;
 	Behaviour*	m_child;
 };
 

@@ -4,7 +4,7 @@
 #include "Renderer2D.h"
 
 #include "NavMesh.h"
-#include "Entity.h"
+#include "Agent.h"
 
 class NavMeshApp : public app::Application {
 public:
@@ -25,7 +25,7 @@ protected:
 
 	NavMesh* m_navMesh;
 
-	ai::Entity m_player;
+	ai::Agent m_player;
 
 	std::list<graph::Node*> m_path;
 	std::list<glm::vec3> m_smoothPath;

@@ -5,7 +5,7 @@
 #include "Texture.h"
 #include "Timing.h"
 #include "Pathfinding.h"
-#include "Entity.h"
+#include "Agent.h"
 #include "Behaviour.h"
 #include "BehaviourTree.h"
 #include "SteeringBehaviour.h"
@@ -89,7 +89,7 @@ public:
 	AttackTimerBehaviour() {}
 	virtual ~AttackTimerBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		// simply reduce the attack timer
 		float timer = 0;
 		if (entity->getBlackboard().get("attackTimer", timer)) {
@@ -106,7 +106,7 @@ public:
 	FollowPathBehaviour() {}
 	virtual ~FollowPathBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity);
+	virtual ai::eBehaviourResult execute(ai::Agent* entity);
 };
 
 class NewPathBehaviour : public ai::Behaviour {
@@ -115,7 +115,7 @@ public:
 	NewPathBehaviour(std::vector<MyNode*>& nodes) : m_nodes(nodes) {}
 	virtual ~NewPathBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity);
+	virtual ai::eBehaviourResult execute(ai::Agent* entity);
 
 protected:
 
@@ -138,7 +138,7 @@ public:
 	}
 
 	// pure virtual function
-	virtual glm::vec3 getForce(ai::Entity* entity) const;
+	virtual glm::vec3 getForce(ai::Agent* entity) const;
 
 protected:
 
@@ -156,7 +156,7 @@ public:
 	IsDeadBehaviour() {}
 	virtual ~IsDeadBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		float health;
 		if (entity->getBlackboard().get("health", health) &&
 			health <= 0.f) {
@@ -172,8 +172,8 @@ public:
 	RespawnBehaviour() {}
 	virtual ~RespawnBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
-		std::function<void(ai::Entity*)>* respawnFunction = nullptr;
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
+		std::function<void(ai::Agent*)>* respawnFunction = nullptr;
 		if (entity->getBlackboard().get("respawnFunction", &respawnFunction) &&
 			respawnFunction != nullptr &&
 			(*respawnFunction)) {
@@ -189,12 +189,12 @@ public:
 	TrackClosestBehaviour() {}
 	virtual ~TrackClosestBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 
-		std::vector<ai::Entity>* targets = nullptr;
+		std::vector<ai::Agent>* targets = nullptr;
 		if (entity->getBlackboard().get("targets", &targets)) {
 
-			ai::Entity* closest = nullptr;
+			ai::Agent* closest = nullptr;
 			float closestDist = 99999.f * 99999.f;
 			auto position = entity->getPosition();
 
@@ -221,9 +221,9 @@ public:
 	ClosestWithinAttackRangeBehaviour() {}
 	virtual ~ClosestWithinAttackRangeBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		float attackRange = 0;
-		ai::Entity* target = nullptr;
+		ai::Agent* target = nullptr;
 		if (entity->getBlackboard().get("attackRange", attackRange) &&
 			entity->getBlackboard().get("target", &target) &&
 			target != nullptr) {
@@ -245,9 +245,9 @@ public:
 	ClosestWithinChaseRangeBehaviour() {}
 	virtual ~ClosestWithinChaseRangeBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		float chaseRange = 0;
-		ai::Entity* target = nullptr;
+		ai::Agent* target = nullptr;
 		if (entity->getBlackboard().get("chaseRange", chaseRange) &&
 			entity->getBlackboard().get("target", &target) &&
 			target != nullptr) {
@@ -269,10 +269,10 @@ public:
 	AttackClosestBehaviour() {}
 	virtual ~AttackClosestBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		float attackTimer = 0;
 		float attackSpeed = 0;
-		ai::Entity* target = nullptr;
+		ai::Agent* target = nullptr;
 		float strength = 0;
 		float health = 0;
 		if (entity->getBlackboard().get("attackTimer", attackTimer) &&
@@ -298,7 +298,7 @@ public:
 	SeekClosestForce() {}
 	virtual ~SeekClosestForce() {}
 
-	virtual glm::vec3 getForce(ai::Entity* entity) const;
+	virtual glm::vec3 getForce(ai::Agent* entity) const;
 };
 
 class EnumBehaviour : public ai::CompositeBehaviour {
@@ -307,7 +307,7 @@ public:
 	EnumBehaviour() {}
 	virtual ~EnumBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity) {
+	virtual ai::eBehaviourResult execute(ai::Agent* entity) {
 		int index = 0;
 		entity->getBlackboard().get("type", index);
 
@@ -354,8 +354,8 @@ protected:
 		CAVEMAN,
 	};
 
-	std::vector<ai::Entity> m_knights;
-	std::vector<ai::Entity> m_cavemen;
+	std::vector<ai::Agent> m_knights;
+	std::vector<ai::Agent> m_cavemen;
 
 	AttackTimerBehaviour m_attackTimerBehaviour;
 

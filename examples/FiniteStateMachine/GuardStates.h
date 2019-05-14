@@ -6,15 +6,15 @@
 class AttackState : public ai::State {
 public:
 
-	AttackState(ai::Entity* target, float speed) : m_target(target), m_speed(speed) {}
+	AttackState(ai::Agent* target, float speed) : m_target(target), m_speed(speed) {}
 	virtual ~AttackState() {}
 
-	virtual void	update(ai::Entity* entity);
+	virtual void	update(ai::Agent* entity);
 
 private:
 
 	float		m_speed;
-	ai::Entity*	m_target;
+	ai::Agent*	m_target;
 };
 
 // just does nothing
@@ -24,7 +24,7 @@ public:
 	IdleState() {}
 	virtual ~IdleState() {}
 
-	virtual void	update(ai::Entity* entity) {}
+	virtual void	update(ai::Agent* entity) {}
 };
 
 // paths between a sequence of points and loops
@@ -38,7 +38,7 @@ public:
 		m_locations.push_back({ x,y });
 	}
 
-	virtual void	update(ai::Entity* entity);
+	virtual void	update(ai::Agent* entity);
 
 protected:
 

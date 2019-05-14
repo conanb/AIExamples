@@ -14,7 +14,7 @@ public:
 	Decision() {}
 	virtual ~Decision() {}
 	
-	virtual void makeDecision(Entity* entity) = 0;
+	virtual void makeDecision(Agent* entity) = 0;
 };
 
 // conditional decision
@@ -34,7 +34,7 @@ public:
 	void setTrueBranch(Decision* decision) { m_trueBranch = decision; }
 	void setFalseBranch(Decision* decision) { m_falseBranch = decision; }
 
-	virtual void makeDecision(Entity* entity) {
+	virtual void makeDecision(Agent* entity) {
 
 		if (m_condition != nullptr &&
 			m_trueBranch != nullptr &&
@@ -64,7 +64,7 @@ public:
 
 	void setDecision(Decision* decision) { m_decision = decision; }
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 
 		if (m_decision != nullptr) {
 			m_decision->makeDecision(entity);
@@ -88,7 +88,7 @@ public:
 
 	void setBehaviour(Behaviour* behaviour) { m_behaviour = behaviour; }
 
-	virtual void makeDecision(Entity* entity) {
+	virtual void makeDecision(Agent* entity) {
 
 		if (m_behaviour != nullptr)
 			m_behaviour->execute(entity);
@@ -108,7 +108,7 @@ public:
 
 	void setForce(SteeringForce* force) { m_force = force; }
 
-	virtual void makeDecision(Entity* entity) {
+	virtual void makeDecision(Agent* entity) {
 
 		glm::vec3* velocity = nullptr;
 
@@ -147,7 +147,7 @@ public:
 
 	void addDecision(Decision* decision) { m_decisions.push_back(decision); }
 	
-	virtual void makeDecision(Entity* entity) {
+	virtual void makeDecision(Agent* entity) {
 
 		if (m_decisions.empty() == false) {
 			m_decisions[rand() % m_decisions.size()]->makeDecision(entity);

@@ -16,7 +16,7 @@ public:
 
 	State* getTargetState() { return m_target; }
 
-	bool hasTriggered(Entity* entity) { return m_condition->test(entity); }
+	bool hasTriggered(Agent* entity) { return m_condition->test(entity); }
 
 private:
 
@@ -35,17 +35,17 @@ public:
 	virtual ~State() {}
 
 	// pure virtual
-	virtual void	update(Entity* entity) = 0;
+	virtual void	update(Agent* entity) = 0;
 
 	// triggers for enter / exit
-	virtual void	onEnter(Entity* entity) {}
-	virtual void	onExit(Entity* entity) {}
+	virtual void	onEnter(Agent* entity) {}
+	virtual void	onExit(Agent* entity) {}
 
 	void addTransition(Transition* transition) {
 		m_transitions.push_back(transition);
 	}
 
-	Transition*	getTriggeredTransition(Entity* entity);
+	Transition*	getTriggeredTransition(Agent* entity);
 
 	const float* getTimerPtr() const { return &m_timer; }
 
@@ -76,7 +76,7 @@ public:
 	Transition*	addTransition(Transition* transition) {	m_transitions.push_back(transition); return transition;	}
 	Condition*	addCondition(Condition* condition) { m_conditions.push_back(condition); return condition; }
 
-	virtual eBehaviourResult execute(Entity* entity);
+	virtual eBehaviourResult execute(Agent* entity);
 
 protected:
 

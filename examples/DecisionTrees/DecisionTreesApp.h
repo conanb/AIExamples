@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-#include "Entity.h"
+#include "Agent.h"
 #include "KeyboardBehaviour.h"
 #include "Decision.h"
 #include "SteeringBehaviour.h"
@@ -14,7 +14,7 @@ public:
 	AttackDecision() {}
 	virtual ~AttackDecision() {}
 
-	virtual void makeDecision(ai::Entity* entity) {}
+	virtual void makeDecision(ai::Agent* entity) {}
 };
 
 class DecisionTreesApp : public app::Application {
@@ -36,10 +36,10 @@ protected:
 
 	void screenWrap(glm::vec3& p);
 
-	ai::Entity			m_player;
+	ai::Agent			m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Entity			m_enemy;
+	ai::Agent			m_enemy;
 	ai::DecisionBehaviour	m_enemyDecisions;
 
 //	std::vector<Obstacle>	m_obstacles;

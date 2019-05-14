@@ -3,7 +3,7 @@
 
 namespace ai {
 
-Transition* State::getTriggeredTransition(Entity* entity) {
+Transition* State::getTriggeredTransition(Agent* entity) {
 
 	for (auto transition : m_transitions) {
 		if (transition->hasTriggered(entity))
@@ -13,7 +13,7 @@ Transition* State::getTriggeredTransition(Entity* entity) {
 	return nullptr;
 }
 
-eBehaviourResult FiniteStateMachine::execute(Entity* entity) {
+eBehaviourResult FiniteStateMachine::execute(Agent* entity) {
 
 	State* state = nullptr;
 	entity->getBlackboard().get("currentState", &state);

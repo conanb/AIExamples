@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-#include "Entity.h"
+#include "Agent.h"
 #include "KeyboardBehaviour.h"
 #include "SteeringBehaviour.h"
 
@@ -24,10 +24,10 @@ protected:
 	app::Renderer2D*	m_2dRenderer;
 	app::Font*		m_font;
 
-	ai::Entity			m_player;
+	ai::Agent			m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Entity			m_enemies[10];
+	ai::Agent			m_enemies[10];
 	ai::FiniteStateMachine	m_fsm;
 
 	// keeping access so that I can toggle weights

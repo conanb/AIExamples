@@ -7,7 +7,7 @@
 
 namespace ai {
 
-eBehaviourResult SteeringBehaviour::execute(Entity* entity) {
+eBehaviourResult SteeringBehaviour::execute(Agent* entity) {
 
 	glm::vec3 force(0);
 
@@ -34,7 +34,7 @@ eBehaviourResult SteeringBehaviour::execute(Entity* entity) {
 	return eBehaviourResult::SUCCESS;
 }
 
-void SteeringState::update(Entity* entity) {
+void SteeringState::update(Agent* entity) {
 
 	glm::vec3 force(0);
 
@@ -59,7 +59,7 @@ void SteeringState::update(Entity* entity) {
 	entity->translate(*velocity * app::Time::deltaTime());
 }
 
-glm::vec3 SeekForce::getForce(Entity* entity) const {
+glm::vec3 SeekForce::getForce(Agent* entity) const {
 
 	// get target position
 	auto target = m_target->getPosition();
@@ -80,7 +80,7 @@ glm::vec3 SeekForce::getForce(Entity* entity) const {
 	return diff * maxForce;
 }
 
-glm::vec3 FleeForce::getForce(Entity* entity) const {
+glm::vec3 FleeForce::getForce(Agent* entity) const {
 
 	// get target position
 	auto target = m_target->getPosition();
@@ -101,7 +101,7 @@ glm::vec3 FleeForce::getForce(Entity* entity) const {
 	return diff * maxForce;
 }
 
-glm::vec3 PursueForce::getForce(Entity* entity) const {
+glm::vec3 PursueForce::getForce(Agent* entity) const {
 
 	// get target position
 	auto target = m_target->getPosition();
@@ -129,7 +129,7 @@ glm::vec3 PursueForce::getForce(Entity* entity) const {
 	return diff * maxForce;
 }
 
-glm::vec3 EvadeForce::getForce(Entity* entity) const {
+glm::vec3 EvadeForce::getForce(Agent* entity) const {
 
 	// get target position
 	auto target = m_target->getPosition();
@@ -157,7 +157,7 @@ glm::vec3 EvadeForce::getForce(Entity* entity) const {
 	return diff * maxForce;
 }
 
-glm::vec3 WanderForce::getForce(Entity* entity) const {
+glm::vec3 WanderForce::getForce(Agent* entity) const {
 
 	WanderData* wd = nullptr;
 	if (entity->getBlackboard().get("wanderData", &wd) == false) {
@@ -194,7 +194,7 @@ glm::vec3 WanderForce::getForce(Entity* entity) const {
 	return wander * maxForce;
 }
 
-glm::vec3 ObstacleAvoidanceForce::getForce(ai::Entity* entity) const {
+glm::vec3 ObstacleAvoidanceForce::getForce(ai::Agent* entity) const {
 
 	glm::vec3 force(0);
 
@@ -294,7 +294,7 @@ glm::vec3 ObstacleAvoidanceForce::getForce(ai::Entity* entity) const {
 	return force * maxForce;
 }
 
-glm::vec3 SeparationForce::getForce(Entity* entity) const {
+glm::vec3 SeparationForce::getForce(Agent* entity) const {
 	
 	// get my position
 	auto position = entity->getPosition();
@@ -333,7 +333,7 @@ glm::vec3 SeparationForce::getForce(Entity* entity) const {
 	return force * maxForce;
 }
 
-glm::vec3 CohesionForce::getForce(Entity* entity) const {
+glm::vec3 CohesionForce::getForce(Agent* entity) const {
 
 	// get my position
 	auto position = entity->getPosition();
@@ -374,7 +374,7 @@ glm::vec3 CohesionForce::getForce(Entity* entity) const {
 	return force * maxForce;
 }
 
-glm::vec3 AlignmentForce::getForce(Entity* entity) const {
+glm::vec3 AlignmentForce::getForce(Agent* entity) const {
 
 	// get my position
 	auto position = entity->getPosition();
@@ -424,7 +424,7 @@ glm::vec3 AlignmentForce::getForce(Entity* entity) const {
 	return force * maxForce;
 }
 
-glm::vec3 FlowForce::getForce(Entity* entity) const {
+glm::vec3 FlowForce::getForce(Agent* entity) const {
 
 	if (m_flowField == nullptr)
 		return {};

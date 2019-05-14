@@ -21,7 +21,7 @@ public:
 	virtual ~SteeringForce() {}
 
 	// pure virtual function
-	virtual glm::vec3 getForce(Entity* entity) const = 0;
+	virtual glm::vec3 getForce(Agent* entity) const = 0;
 };
 
 // weighted steering force
@@ -49,7 +49,7 @@ public:
 		}
 	}
 
-	virtual eBehaviourResult execute(Entity* entity);
+	virtual eBehaviourResult execute(Agent* entity);
 
 protected:
 
@@ -75,7 +75,7 @@ public:
 		}
 	}
 
-	virtual void update(Entity* entity);
+	virtual void update(Agent* entity);
 
 protected:
 
@@ -85,61 +85,61 @@ protected:
 class SeekForce : public SteeringForce {
 public:
 
-	SeekForce(Entity* target = nullptr) : m_target(target) {}
+	SeekForce(Agent* target = nullptr) : m_target(target) {}
 	virtual ~SeekForce() {}
 
-	void setTarget(Entity* target) { m_target = target; }
+	void setTarget(Agent* target) { m_target = target; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	Entity*	m_target;
+	Agent*	m_target;
 };
 
 class FleeForce : public SteeringForce {
 public:
 
-	FleeForce(Entity* target = nullptr) : m_target(target) {}
+	FleeForce(Agent* target = nullptr) : m_target(target) {}
 	virtual ~FleeForce() {}
 
-	void setTarget(Entity* target) { m_target = target; }
+	void setTarget(Agent* target) { m_target = target; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	Entity*	m_target;
+	Agent*	m_target;
 };
 
 class PursueForce : public SteeringForce {
 public:
 
-	PursueForce(Entity* target = nullptr) : m_target(target) {}
+	PursueForce(Agent* target = nullptr) : m_target(target) {}
 	virtual ~PursueForce() {}
 
-	void setTarget(Entity* target) { m_target = target; }
+	void setTarget(Agent* target) { m_target = target; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	Entity*	m_target;
+	Agent*	m_target;
 };
 
 class EvadeForce : public SteeringForce {
 public:
 
-	EvadeForce(Entity* target = nullptr) : m_target(target) {}
+	EvadeForce(Agent* target = nullptr) : m_target(target) {}
 	virtual ~EvadeForce() {}
 
-	void setTarget(Entity* target) { m_target = target; }
+	void setTarget(Agent* target) { m_target = target; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	Entity*	m_target;
+	Agent*	m_target;
 };
 
 class WanderForce : public SteeringForce {
@@ -148,7 +148,7 @@ public:
 	WanderForce() {}
 	virtual ~WanderForce() {}
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 };
 
 // obstacles
@@ -192,7 +192,7 @@ public:
 
 	void clearObstacles() { m_obstacles.clear();  }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 public:
 
@@ -209,14 +209,14 @@ public:
 	SeparationForce() {}
 	virtual ~SeparationForce() {}
 
-	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Agent>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	std::vector<Entity>*	m_entities;
+	std::vector<Agent>*	m_entities;
 	float					m_radius;
 };
 
@@ -226,14 +226,14 @@ public:
 	CohesionForce() {}
 	virtual ~CohesionForce() {}
 
-	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Agent>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	std::vector<Entity>*	m_entities;
+	std::vector<Agent>*	m_entities;
 	float					m_radius;
 };
 
@@ -243,14 +243,14 @@ public:
 	AlignmentForce() {}
 	virtual ~AlignmentForce() {}
 
-	void setEntities(std::vector<Entity>* entities) { m_entities = entities; }
+	void setEntities(std::vector<Agent>* entities) { m_entities = entities; }
 	void setRadius(float radius) { m_radius = radius; }
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 
-	std::vector<Entity>*	m_entities;
+	std::vector<Agent>*	m_entities;
 	float						m_radius;
 };
 
@@ -268,7 +268,7 @@ public:
 		m_cellSize = cellSize;
 	}
 
-	virtual glm::vec3 getForce(Entity* entity) const;
+	virtual glm::vec3 getForce(Agent* entity) const;
 
 protected:
 

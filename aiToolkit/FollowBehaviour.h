@@ -10,16 +10,16 @@ public:
 	FollowBehaviour();
 	virtual ~FollowBehaviour();
 
-	virtual eBehaviourResult execute(Entity* entity);
+	virtual eBehaviourResult execute(Agent* entity);
 
 	void setSpeed(float speed) { m_speed = speed; }
 
-	void setTarget(Entity* entity) { m_target = entity; }
+	void setTarget(Agent* entity) { m_target = entity; }
 
 private:
 
 	float		m_speed;
-	Entity*	m_target;
+	Agent*	m_target;
 };
 
 } // namespace ai

@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-#include "Entity.h"
+#include "Agent.h"
 #include "SteeringBehaviour.h"
 #include "Texture.h"
 
@@ -26,7 +26,7 @@ protected:
 
 	app::Texture*		m_map;
 
-	ai::Entity			m_entitys[100];
+	ai::Agent			m_entitys[100];
 
 	ai::SteeringBehaviour	m_steeringBehaviour;
 	ai::FlowForce			m_flowForce;

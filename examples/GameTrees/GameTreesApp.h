@@ -33,7 +33,7 @@ protected:
 		MONTECARLO,
 	};
 
-	int					m_gameType = TICTACTOE;
+	int					m_gameType = CONNECTFOUR;
 	int					m_aiType = MONTECARLO;
 
 	GameTree::Game*		m_game;

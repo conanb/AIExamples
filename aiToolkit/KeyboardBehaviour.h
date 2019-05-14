@@ -10,7 +10,7 @@ public:
 	KeyboardBehaviour();
 	virtual ~KeyboardBehaviour();
 
-	virtual eBehaviourResult execute(Entity* entity);
+	virtual eBehaviourResult execute(Agent* entity);
 
 	void setSpeed(float speed) { m_speed = speed; }
 

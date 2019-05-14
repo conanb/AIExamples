@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Entity.h"
+#include "Agent.h"
 
 namespace ai {
 
@@ -11,9 +11,9 @@ public:
 	Condition() {}
 	virtual ~Condition() {}
 
-	virtual bool test(Entity* entity) const = 0;
+	virtual bool test(Agent* entity) const = 0;
 
-	virtual eBehaviourResult execute(Entity* entity) {
+	virtual eBehaviourResult execute(Agent* entity) {
 		if (test(entity))
 			return eBehaviourResult::SUCCESS;
 		return eBehaviourResult::FAILURE;
@@ -28,7 +28,7 @@ public:
 	}
 	virtual ~FloatRangeCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(Agent* entity) const {
 		return (m_min <= *m_value) && (m_max >= *m_value);
 	}
 
@@ -46,7 +46,7 @@ public:
 	}
 	virtual ~FloatGreaterCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(Agent* entity) const {
 		return *m_value > m_compare;
 	}
 
@@ -59,11 +59,11 @@ private:
 class WithinRangeCondition : public Condition {
 public:
 
-	WithinRangeCondition(const Entity* target, float range)
+	WithinRangeCondition(const Agent* target, float range)
 		: m_target(target), m_range(range) {}
 	virtual ~WithinRangeCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(Agent* entity) const {
 		// get target position
 		auto target = m_target->getPosition();
 
@@ -76,7 +76,7 @@ public:
 
 private:
 
-	const Entity* m_target;
+	const Agent* m_target;
 	float m_range;
 };
 
@@ -86,7 +86,7 @@ public:
 	NotCondition(const Condition* condition) : m_condition(condition) {}
 	virtual ~NotCondition() {}
 
-	virtual bool test(Entity* entity) const {
+	virtual bool test(Agent* entity) const {
 		return !m_condition->test(entity);
 	}
 

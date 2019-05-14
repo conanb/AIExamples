@@ -29,7 +29,7 @@ bool GameTreesApp::startup() {
 	switch (m_aiType) {
 	case RANDOMAI:		m_ai = new GameTree::RandomAI();	break;
 	case MINIMAX:		m_ai = new MiniMaxAI(GameTree::PLAYER_TWO);	break;
-	case MONTECARLO:	m_ai = new MonteCarloAI(50);	break;
+	case MONTECARLO:	m_ai = new MonteCarloAI(5);	break;
 	};	
 
 	return true;
@@ -119,9 +119,9 @@ void GameTreesApp::draw() {
 	// draw monte carlo scores
 	if (m_aiType == MONTECARLO &&
 		m_gameType == CONNECTFOUR) {
-		for (auto& scores : ((MonteCarloAI*)m_ai)->m_scoresForActions) {
+		for (const auto& scores : ((MonteCarloAI*)m_ai)->getScoresForEachAction()) {
 
-			sprintf(buf, "%.2f", scores.second / ((MonteCarloAI*)m_ai)->m_playouts);
+			sprintf(buf, "%.2f", scores.second / ((MonteCarloAI*)m_ai)->getPlayouts());
 
 			m_2dRenderer->drawText(m_font, buf, 100 + scores.first * 100, 50);
 		}

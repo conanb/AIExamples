@@ -24,10 +24,10 @@ protected:
 	app::Renderer2D*	m_2dRenderer;
 	app::Font*		m_font;
 	
-	ai::Entity				m_player;
+	ai::Agent				m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Entity			m_enemy[5];
+	ai::Agent			m_enemy[5];
 	ai::Behaviour*		m_guardBehaviour;
 
 //	std::vector<Obstacle>	m_obstacles;

@@ -229,9 +229,9 @@ void MyEntity::execute(ai::BlackboardQuestion* question, ai::Blackboard* blackbo
 	m_blackboard.set("target", q->needsHelp);
 }
 
-void HelpEntityState::update(ai::Entity* entity) {
+void HelpEntityState::update(ai::Agent* entity) {
 
-	ai::Entity* target = nullptr;
+	ai::Agent* target = nullptr;
 	entity->getBlackboard().get("target", &target);
 
 	if (target == nullptr)
@@ -264,7 +264,7 @@ void HelpEntityState::update(ai::Entity* entity) {
 }
 
 // go through questions and respond to those we think are valid
-ai::eBehaviourResult BlackboardRespondBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult BlackboardRespondBehaviour::execute(ai::Agent* entity) {
 
 	auto& questions = m_blackboard->getQuestions();
 

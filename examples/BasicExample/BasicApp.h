@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 
-#include "Entity.h"
+#include "Agent.h"
 #include "KeyboardBehaviour.h"
 #include "FollowBehaviour.h"
 
@@ -24,9 +24,9 @@ protected:
 	app::Renderer2D*	m_2dRenderer;
 	app::Font*			m_font;
 
-	ai::Entity				m_player;
+	ai::Agent				m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Entity				m_enemy;
+	ai::Agent				m_enemy;
 	ai::FollowBehaviour		m_followBehaviour;
 };

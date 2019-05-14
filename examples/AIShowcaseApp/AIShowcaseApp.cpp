@@ -200,9 +200,9 @@ bool AIShowcaseApp::startup() {
 		knight.getBlackboard().set("targets", &m_cavemen);
 
 		// respawn function uses a func ptr to a lambda
-		auto myFunc = new std::function<void(ai::Entity*)>();
+		auto myFunc = new std::function<void(ai::Agent*)>();
 
-		*myFunc = [this](ai::Entity* entity) {
+		*myFunc = [this](ai::Agent* entity) {
 			entity->getBlackboard().set("health", 100.f);
 			auto n = m_pathNodes[rand() % m_pathNodes.size()];
 			entity->setPosition(n->position);
@@ -248,8 +248,8 @@ bool AIShowcaseApp::startup() {
 		caveman.getBlackboard().set("type", CAVEMAN);
 		caveman.getBlackboard().set("targets", &m_knights);
 
-		caveman.getBlackboard().set("respawnFunction", new std::function<void(ai::Entity*)>(
-			[this](ai::Entity* entity) {
+		caveman.getBlackboard().set("respawnFunction", new std::function<void(ai::Agent*)>(
+			[this](ai::Agent* entity) {
 			entity->getBlackboard().set("health", 100.f);
 			
 			int i;
@@ -358,7 +358,7 @@ void AIShowcaseApp::draw() {
 
 	float health, maxHealth;
 
-	ai::Entity* target = nullptr;
+	ai::Agent* target = nullptr;
 
 	m_2dRenderer->setUVRect(0, 1 - h, w, h);
 	for (auto& knight : m_knights) {
@@ -556,7 +556,7 @@ int getDirtSprite(unsigned char spriteId) {
 	}
 }
 
-ai::eBehaviourResult FollowPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult FollowPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<graph::Node*>* path = nullptr;
@@ -607,7 +607,7 @@ MyNode* NewPathBehaviour::findClosest(const glm::vec3& p) {
 	return closest;
 }
 
-ai::eBehaviourResult NewPathBehaviour::execute(ai::Entity* entity) {
+ai::eBehaviourResult NewPathBehaviour::execute(ai::Agent* entity) {
 
 	// access data from the game object
 	std::list<graph::Node*>* path = nullptr;
@@ -630,7 +630,7 @@ ai::eBehaviourResult NewPathBehaviour::execute(ai::Entity* entity) {
 	return ai::eBehaviourResult::SUCCESS;
 }
 
-glm::vec3 WaterAvoidanceForce::getForce(ai::Entity* entity) const {
+glm::vec3 WaterAvoidanceForce::getForce(ai::Agent* entity) const {
 
 	glm::vec3 force = { 0, 0, 0 };
 
@@ -758,11 +758,11 @@ void WaterAvoidanceForce::collideWithBox(const glm::vec3& p, const glm::vec3& v,
 	}
 }
 
-glm::vec3 SeekClosestForce::getForce(ai::Entity* entity) const {
+glm::vec3 SeekClosestForce::getForce(ai::Agent* entity) const {
 
 	glm::vec3 diff(0);
 
-	ai::Entity* target = nullptr;
+	ai::Agent* target = nullptr;
 	if (entity->getBlackboard().get("target", &target) &&
 		target != nullptr) {
 		

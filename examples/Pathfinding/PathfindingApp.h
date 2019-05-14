@@ -5,7 +5,7 @@
 #include "Texture.h"
 #include "Pathfinding.h"
 #include "Behaviour.h"
-#include "Entity.h"
+#include "Agent.h"
 #include "Condition.h"
 
 // a pathfinding node with a 2D position
@@ -56,7 +56,7 @@ public:
 	FollowPathBehaviour() {}
 	virtual ~FollowPathBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity);
+	virtual ai::eBehaviourResult execute(ai::Agent* entity);
 };
 
 class NewPathBehaviour : public ai::Behaviour {
@@ -65,7 +65,7 @@ public:
 	NewPathBehaviour(std::vector<MyNode*>& nodes) : m_nodes(nodes) {}
 	virtual ~NewPathBehaviour() {}
 
-	virtual ai::eBehaviourResult execute(ai::Entity* entity);
+	virtual ai::eBehaviourResult execute(ai::Agent* entity);
 
 protected:
 
@@ -78,7 +78,7 @@ public:
 	ValidPathCondition() {}
 	virtual ~ValidPathCondition() {}
 
-	virtual bool test(ai::Entity* entity) const {
+	virtual bool test(ai::Agent* entity) const {
 
 		std::list<graph::Node*>* path = nullptr;
 		if (entity->getBlackboard().get("path", &path)) {
@@ -114,7 +114,7 @@ protected:
 	app::Texture			m_map;
 	std::vector<MyNode*>	m_nodes;
 	
-	ai::Entity						m_player;
+	ai::Agent						m_player;
 	//PathBehaviour					m_pathBehaviour;
 	std::list<graph::Node*>	m_path;
 
