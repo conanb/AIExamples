@@ -36,7 +36,7 @@ protected:
 	ai::SeekForce				m_seek;
 	ai::FleeForce				m_flee;
 	ai::WanderForce				m_wander;
-	//ObstacleAvoidanceForce	m_avoid;
+	ai::ObstacleAvoidanceForce	m_avoid;
 
-	//std::vector<Obstacle>	m_obstacles;
+	std::vector<ai::Obstacle>	m_obstacles;
 };

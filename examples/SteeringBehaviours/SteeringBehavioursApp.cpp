@@ -26,18 +26,18 @@ bool SteeringBehavioursApp::startup() {
 	// setup steering properties for zombies
 	m_seek.setTarget(&m_player);
 	m_flee.setTarget(&m_player);
-//	m_avoid.setFeelerLength(80);
+	m_avoid.setFeelerLength(80);
 
 	// set up "zombie" finite state machine using steering
 	m_attackState = new ai::SteeringState();
 	m_attackState->addForce(&m_wander, .2f);
 	m_attackState->addForce(&m_seek, .8f);
 	m_attackState->addForce(&m_flee, 0);
-//	m_attackState->addForce(&m_avoid, 1);
+	m_attackState->addForce(&m_avoid, 1);
 
 	ai::SteeringState* wanderState = new ai::SteeringState();
 	wanderState->addForce(&m_wander, 1);
-//	wanderState->addForce(&m_avoid, 1);
+	wanderState->addForce(&m_avoid, 1);
 
 	// set conditions for state transitions
 	ai::Condition* withinRangeCondition = new ai::WithinRangeCondition(&m_player, 200);
@@ -83,25 +83,26 @@ bool SteeringBehavioursApp::startup() {
 	}
 
 	// set up my obstacles
-/*	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 8; ++i) {
 
-		Obstacle o;
-		o.x = rand() % (getWindowWidth() - 150) + 75.f;
-		o.y = rand() % (getWindowHeight() - 150) + 75.f;
+		ai::Obstacle o;
+		o.center.x = rand() % (getWindowWidth() - 150) + 75.f;
+		o.center.y = rand() % (getWindowHeight() - 150) + 75.f;
+		o.center.z = 0;
 
-		if (rand() % 20 < 10) {
-			o.type = Obstacle::SPHERE;
-			o.r = rand() % 40 + 40.f;
-			m_avoid.addSphereObstacle(o.x, o.y, o.r);
+		/*if (rand() % 20 < 10) {
+			o.type = ai::Obstacle::SPHERE;
+			o.radius = rand() % 40 + 40.f;
+			m_avoid.addSphereObstacle(o.center.x, o.center.y, o.center.z, o.radius);
 		}
-		else {
-			o.type = Obstacle::BOX;
-			o.w = o.h = rand() % 50 + 100.f;
-			m_avoid.addBoxObstacle(o.x, o.y, o.w, o.h);
+		else*/ {
+			o.type = ai::Obstacle::BOX;
+			o.extents.x = o.extents.y = rand() % 50 + 100.f;
+			m_avoid.addBoxObstacle(o.center.x, o.center.y, o.center.z, o.extents.x, o.extents.y);
 		}
 
 		m_obstacles.push_back(o);
-	}*/
+	}
 
 	return true;
 }
@@ -147,13 +148,13 @@ void SteeringBehavioursApp::draw() {
 	m_2dRenderer->begin();
 
 	// draw obstacles as pink circles
-	/*for (auto obstacle : m_obstacles) {
+	for (auto obstacle : m_obstacles) {
 		m_2dRenderer->setRenderColour(1, 0, 1);
-		if (obstacle.type == Obstacle::SPHERE)
-			m_2dRenderer->drawCircle(obstacle.x, obstacle.y, obstacle.r);
-		if (obstacle.type == Obstacle::BOX)
-			m_2dRenderer->drawBox(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
-	}*/
+		if (obstacle.type == ai::Obstacle::SPHERE)
+			m_2dRenderer->drawCircle(obstacle.center.x, obstacle.center.y, obstacle.radius);
+		if (obstacle.type == ai::Obstacle::BOX)
+			m_2dRenderer->drawBox(obstacle.center.x, obstacle.center.y, obstacle.extents.x, obstacle.extents.y);
+	}
 	
 	// draw player as a green circle
 	auto position = m_player.getPosition();

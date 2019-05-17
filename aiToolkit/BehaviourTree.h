@@ -4,7 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
-#include <Semaphore.h>
+//#include <Semaphore.h>
 
 namespace ai {
 
@@ -299,7 +299,7 @@ protected:
 	Behaviour*	m_child;
 };
 
-class SemaphoreGuard : public Behaviour {
+/*class SemaphoreGuard : public Behaviour {
 public:
 
 	SemaphoreGuard(Behaviour* child, app::Semaphore* semaphore) : m_child(child), m_semaphore(semaphore) {}
@@ -319,6 +319,6 @@ protected:
 
 	app::Semaphore* m_semaphore;
 	Behaviour*	m_child;
-};
+};*/
 
 } // namespace ai

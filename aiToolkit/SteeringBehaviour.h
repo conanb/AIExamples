@@ -161,12 +161,10 @@ struct Obstacle {
 
 	int type;
 	glm::vec3 center;
-	union {
+
 		float radius;
-		struct {
 			glm::vec3 extents;
-		};
-	};
+
 };
 
 class ObstacleAvoidanceForce : public SteeringForce {
@@ -178,12 +176,20 @@ public:
 	void setFeelerLength(float length) { m_feelerLength = length; }
 
 	void addSphereObstacle(float x, float y, float z, float radius) {
-		Obstacle o = { Obstacle::SPHERE, {x, y, z} };
+		Obstacle o;
+		o.type = Obstacle::SPHERE;
+		o.center.x = x;
+		o.center.y = y;
+		o.center.z = z;
 		o.radius = radius;
 		m_obstacles.push_back(o);
 	}
 	void addBoxObstacle(float x, float y, float z, float w, float h, float d = 0) {
-		Obstacle o = { Obstacle::BOX, {x, y, z} };
+		Obstacle o;
+		o.type = Obstacle::BOX;
+		o.center.x = x;
+		o.center.y = y;
+		o.center.z = z;
 		o.extents.x = w;
 		o.extents.y = h;
 		o.extents.z = d;
