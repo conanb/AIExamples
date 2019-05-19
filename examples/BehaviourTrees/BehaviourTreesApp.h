@@ -30,5 +30,5 @@ protected:
 	ai::Agent			m_enemy[5];
 	ai::Behaviour*		m_guardBehaviour;
 
-//	std::vector<Obstacle>	m_obstacles;
+	std::vector<ai::Obstacle>	m_obstacles;
 };

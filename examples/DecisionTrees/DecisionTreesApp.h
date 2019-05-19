@@ -32,15 +32,13 @@ public:
 protected:
 
 	app::Renderer2D*	m_2dRenderer;
-	app::Font*		m_font;
+	app::Font*			m_font;
 
-	void screenWrap(glm::vec3& p);
-
-	ai::Agent			m_player;
+	ai::Agent				m_player;
 	ai::KeyboardBehaviour	m_keyboardBehaviour;
 
-	ai::Agent			m_enemy;
+	ai::Agent				m_enemy;
 	ai::DecisionBehaviour	m_enemyDecisions;
 
-//	std::vector<Obstacle>	m_obstacles;
+	std::vector<ai::Obstacle>	m_obstacles;
 };

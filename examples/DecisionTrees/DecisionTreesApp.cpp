@@ -32,18 +32,18 @@ bool DecisionTreesApp::startup() {
 	m_enemy.getBlackboard().set("wanderData", new ai::WanderData({ 200.0f, 75.0f, 25.0f, glm::vec3(0), glm::vec3(1,1,0) }), true);
 
 	// obstacle avoidance force used by decisions
-//	auto obstacleForce = new ai::ObstacleAvoidanceForce();
-//	obstacleForce->setFeelerLength(80);
+	auto obstacleForce = new ai::ObstacleAvoidanceForce();
+	obstacleForce->setFeelerLength(80);
 
 	// aimless wandering forces
 	auto wanderingBehaviour = new ai::SteeringBehaviour();
 	wanderingBehaviour->addForce(new ai::WanderForce());
-//	wanderingBehaviour->addForce(obstacleForce);
+	wanderingBehaviour->addForce(obstacleForce);
 
 	// attacking steering forces
 	auto attackingBehaviour = new ai::SteeringBehaviour();
 	attackingBehaviour->addForce(new ai::SeekForce(&m_player), 0.8f);
-//	attackingBehaviour->addForce(obstacleForce);
+	attackingBehaviour->addForce(obstacleForce);
 
 	// decision tree branches
 	auto attackOrSeekBranch = new ai::ConditionalDecision();
@@ -65,19 +65,20 @@ bool DecisionTreesApp::startup() {
 		rootBranch->setFalseBranch(new ai::BehaviourDecision(wanderingBehaviour));
 	
 	// set up my obstacles
-/*	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 10; ++i) {
 
-		Obstacle c;
-		c.type = Obstacle::SPHERE;
-		c.x = rand() % (getWindowWidth() - 150) + 75.f;
-		c.y = rand() % (getWindowHeight() - 150) + 75.f;
-		c.r = rand() % 40 + 40.f;
+		ai::Obstacle c;
+		c.type = ai::Obstacle::SPHERE;
+		c.center.x = rand() % (getWindowWidth() - 150) + 75.f;
+		c.center.y = rand() % (getWindowHeight() - 150) + 75.f;
+		c.center.z = 0;
+		c.radius = rand() % 40 + 40.f;
 
 		m_obstacles.push_back(c);
 
 		// add obstacles to avoid behaviour
-		obstacleForce->addSphereObstacle(c.x, c.y, c.r);
-	}*/
+		obstacleForce->addSphereObstacle(c.center.x, c.center.y, c.center.z, c.radius);
+	}
 
 	return true;
 }
@@ -110,10 +111,10 @@ void DecisionTreesApp::draw() {
 	m_2dRenderer->begin();
 
 	// draw obstacles as pink circles
-/*	for (auto circle : m_obstacles) {
+	for (auto circle : m_obstacles) {
 		m_2dRenderer->setRenderColour(1, 0, 1);
-		m_2dRenderer->drawCircle(circle.x, circle.y, circle.r);
-	}*/
+		m_2dRenderer->drawCircle(circle.center.x, circle.center.y, circle.radius);
+	}
 
 	// draw player as a green circle
 	auto position = m_player.getPosition();
@@ -144,14 +145,4 @@ void DecisionTreesApp::draw() {
 
 	// done drawing sprites
 	m_2dRenderer->end();
-}
-
-void DecisionTreesApp::screenWrap(glm::vec3& p) {
-	// wrap position around the screen
-	p.x = fmod(p.x, (float)getWindowWidth());
-	if (p.x < 0)
-		p.x += getWindowWidth();
-	p.y = fmod(p.y, (float)getWindowHeight());
-	if (p.y < 0)
-		p.y += getWindowHeight();
 }

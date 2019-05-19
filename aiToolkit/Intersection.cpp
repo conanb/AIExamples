@@ -1,8 +1,8 @@
 #include "Intersection.h"
 
-#include <math.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <math.h>
 
 namespace intersection {
 
@@ -13,7 +13,7 @@ bool rayCircleIntersection(const glm::vec3& p,	// ray start
 						   glm::vec3& i,	// intersection point
 						   float* t) {	// distance along normalised ray direction to intersection
 
-													// normalise direction
+	// normalise direction
 	float temp = glm::dot(d,d);
 	if (temp == 0)
 		return false;
@@ -36,7 +36,7 @@ bool rayCircleIntersection(const glm::vec3& p,	// ray start
 	}
 
 	// project sphere centre onto d to get edge of a triangle
-	float a = glm::dot(e, d);
+	float a = glm::dot(e, dir);
 
 	// squared edge length
 	float a2 = a * a;
@@ -52,7 +52,7 @@ bool rayCircleIntersection(const glm::vec3& p,	// ray start
 	// calculate distance in direction d from p that the intersection occurs
 	temp = a - sqrtf(f2);
 
-	i = d * temp + p;
+	i = dir * temp + p;
 
 	if (t != nullptr)
 		*t = temp;

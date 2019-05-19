@@ -16,7 +16,7 @@ bool FlockingApp::startup() {
 
 	m_font = new app::Font("../../bin/font/consolas.ttf", 32);
 	
-	m_entities.resize(2000);
+	m_entities.resize(400);
 
 	m_separation.setEntities(&m_entities);
 	m_separation.setRadius(100);

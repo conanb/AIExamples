@@ -79,23 +79,23 @@ bool SteeringBehavioursApp::startup() {
 		enemy.getBlackboard().set("maxVelocity", 150.f);
 		
 		enemy.setPosition({ float(rand() % getWindowWidth()),
-						   float(rand() % getWindowHeight()), 0 });
+						   float(rand() % getWindowHeight()), 0.0f });
 	}
 
 	// set up my obstacles
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i < 10; ++i) {
 
 		ai::Obstacle o;
 		o.center.x = rand() % (getWindowWidth() - 150) + 75.f;
 		o.center.y = rand() % (getWindowHeight() - 150) + 75.f;
 		o.center.z = 0;
 
-		/*if (rand() % 20 < 10) {
+		if (rand() % 20 < 10) {
 			o.type = ai::Obstacle::SPHERE;
 			o.radius = rand() % 40 + 40.f;
 			m_avoid.addSphereObstacle(o.center.x, o.center.y, o.center.z, o.radius);
 		}
-		else*/ {
+		else {
 			o.type = ai::Obstacle::BOX;
 			o.extents.x = o.extents.y = rand() % 50 + 100.f;
 			m_avoid.addBoxObstacle(o.center.x, o.center.y, o.center.z, o.extents.x, o.extents.y);
